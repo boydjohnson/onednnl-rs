@@ -1,6 +1,6 @@
 use onednnl_sys::dnnl_status_t;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum DnnlError {
     InvalidArguments,
     OutOfMemory,
