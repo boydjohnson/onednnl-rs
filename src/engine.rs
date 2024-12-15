@@ -1,12 +1,15 @@
-use onednnl_sys::{
-    dnnl_engine_create, dnnl_engine_destroy, dnnl_engine_get_count, dnnl_engine_get_kind,
-    dnnl_engine_kind_t, dnnl_engine_t, dnnl_status_t,
+use {
+    crate::error::DnnlError,
+    onednnl_sys::{
+        dnnl_engine_create, dnnl_engine_destroy, dnnl_engine_get_count, dnnl_engine_get_kind,
+        dnnl_engine_kind_t, dnnl_engine_t, dnnl_status_t,
+    },
+    std::sync::Arc,
 };
 
-use crate::error::DnnlError;
-
+#[derive(Debug)]
 pub struct Engine {
-    handle: dnnl_engine_t,
+    pub(crate) handle: dnnl_engine_t,
 }
 
 impl Engine {
@@ -25,11 +28,11 @@ impl Engine {
     ///
     /// assert!(engine.is_ok());
     /// ```
-    pub fn new(kind: dnnl_engine_kind_t::Type, index: usize) -> Result<Self, DnnlError> {
+    pub fn new(kind: dnnl_engine_kind_t::Type, index: usize) -> Result<Arc<Self>, DnnlError> {
         let mut handle: dnnl_engine_t = std::ptr::null_mut();
         let status = unsafe { dnnl_engine_create(&mut handle, kind, index) };
         if status == dnnl_status_t::dnnl_success {
-            Ok(Self { handle })
+            Ok(Arc::new(Self { handle }))
         } else {
             Err(status.into())
         }
@@ -48,7 +51,7 @@ impl Engine {
     ///
     /// assert_eq!(engine.get_kind(), Ok(Engine::CPU));
     /// ```
-    pub fn get_kind(&self) -> Result<dnnl_engine_kind_t::Type, DnnlError> {
+    pub fn get_kind(self: Arc<Self>) -> Result<dnnl_engine_kind_t::Type, DnnlError> {
         let mut kind: dnnl_engine_kind_t::Type = 0; // Initialize a variable to store the kind
         let status = unsafe { dnnl_engine_get_kind(self.handle, &mut kind) }; // Pass a mutable reference
 
