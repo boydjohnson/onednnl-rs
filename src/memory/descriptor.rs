@@ -20,17 +20,17 @@ impl MemoryDescriptor {
     /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
     ///
     ///
-    /// let md_1d = MemoryDescriptor::new::<1, x>(&[15], dnnl_f32);
+    /// let md_1d = MemoryDescriptor::new::<1, x>([15], dnnl_f32);
     ///
     /// assert!(md_1d.is_ok());
     ///
-    /// let md_2d = MemoryDescriptor::new::<2, ab>(&[2, 3], dnnl_f32);
+    /// let md_2d = MemoryDescriptor::new::<2, ab>([2, 3], dnnl_f32);
     ///
     /// assert!(md_2d.is_ok());
     ///
     /// ```
     pub fn new<const NDIMS: usize, T: FormatTag<NDIMS>>(
-        dims: &[dnnl_dim_t],
+        dims: [dnnl_dim_t; NDIMS],
         data_type: dnnl_data_type_t::Type,
     ) -> Result<Self, DnnlError> {
         let mut handle: dnnl_memory_desc_t = std::ptr::null_mut();
