@@ -6,7 +6,7 @@ use onednnl_sys::{
 
 #[derive(Debug)]
 pub struct MemoryDescriptor {
-    handle: dnnl_memory_desc_t,
+    pub(crate) handle: dnnl_memory_desc_t,
 }
 
 use crate::error::DnnlError;
