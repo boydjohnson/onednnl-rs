@@ -3,7 +3,7 @@ pub mod descriptor;
 
 pub enum Direction {
     Forward,
-    Backwards,
+    Backward,
 }
 
 pub enum OperationType {
@@ -22,7 +22,7 @@ pub enum OperationType {
     Lrn,
     Lstm,
     MatMul,
-    PReLu,
+    PRelu,
     Shuffle,
     Softmax,
     VanillaRnn,
@@ -46,7 +46,7 @@ macro_rules! impl_operation {
 }
 
 impl_operation!(ForwardAuGru, Direction::Forward, OperationType::Augru);
-impl_operation!(BackwardsAuGru, Direction::Backwards, OperationType::Augru);
+impl_operation!(BackwardAuGru, Direction::Backward, OperationType::Augru);
 
 impl_operation!(
     ForwardBatchNorm,
@@ -54,16 +54,16 @@ impl_operation!(
     OperationType::BatchNormalization
 );
 impl_operation!(
-    BackwardsBatchNorm,
-    Direction::Backwards,
+    BackwardBatchNorm,
+    Direction::Backward,
     OperationType::BatchNormalization
 );
 
 impl_operation!(ForwardBinary, Direction::Forward, OperationType::Binary);
-impl_operation!(BackwardsBinary, Direction::Backwards, OperationType::Binary);
+impl_operation!(BackwardBinary, Direction::Backward, OperationType::Binary);
 
 impl_operation!(ForwardConcat, Direction::Forward, OperationType::Concat);
-impl_operation!(BackwardsConcat, Direction::Backwards, OperationType::Concat);
+impl_operation!(BackwardConcat, Direction::Backward, OperationType::Concat);
 
 impl_operation!(
     ForwardConvolution,
@@ -71,7 +71,90 @@ impl_operation!(
     OperationType::Convolution
 );
 impl_operation!(
-    BackwardsConvolution,
-    Direction::Backwards,
+    BackwardConvolution,
+    Direction::Backward,
     OperationType::Convolution
+);
+
+impl_operation!(
+    ForwardDeconvolution,
+    Direction::Forward,
+    OperationType::Deconvolution
+);
+impl_operation!(
+    BackwardDeconvolution,
+    Direction::Backward,
+    OperationType::Deconvolution
+);
+
+impl_operation!(ForwardEltwise, Direction::Forward, OperationType::Eltwise);
+impl_operation!(BackwardEltwise, Direction::Backward, OperationType::Eltwise);
+
+impl_operation!(
+    ForwardGroupNorm,
+    Direction::Forward,
+    OperationType::GroupNormalization
+);
+impl_operation!(
+    BackwardGroupNorm,
+    Direction::Backward,
+    OperationType::GroupNormalization
+);
+
+impl_operation!(ForwardGru, Direction::Forward, OperationType::Gru);
+impl_operation!(BackwardGru, Direction::Backward, OperationType::Gru);
+
+impl_operation!(
+    ForwardInnerProduct,
+    Direction::Forward,
+    OperationType::InnerProduct
+);
+impl_operation!(
+    BackwardInnerProduct,
+    Direction::Backward,
+    OperationType::InnerProduct
+);
+
+impl_operation!(
+    ForwardLayerNorm,
+    Direction::Forward,
+    OperationType::LayerNormalization
+);
+impl_operation!(
+    BackwardLayerNorm,
+    Direction::Backward,
+    OperationType::LayerNormalization
+);
+
+impl_operation!(ForwardLbrAuGru, Direction::Forward, OperationType::LbrAuGru);
+impl_operation!(
+    BackwardLbrAuGru,
+    Direction::Backward,
+    OperationType::LbrAuGru
+);
+
+impl_operation!(ForwardLrn, Direction::Forward, OperationType::Lrn);
+impl_operation!(BackwardLrn, Direction::Backward, OperationType::Lrn);
+
+impl_operation!(ForwardLstm, Direction::Forward, OperationType::Lstm);
+impl_operation!(BackwardLstm, Direction::Backward, OperationType::Lstm);
+
+impl_operation!(ForwardMatMul, Direction::Forward, OperationType::MatMul);
+impl_operation!(BackwardMatMul, Direction::Backward, OperationType::MatMul);
+
+impl_operation!(ForwardPRelu, Direction::Forward, OperationType::PRelu);
+impl_operation!(BackwardPRelu, Direction::Backward, OperationType::PRelu);
+
+impl_operation!(ForwardShuffle, Direction::Forward, OperationType::Shuffle);
+impl_operation!(BackwardShuffle, Direction::Backward, OperationType::Shuffle);
+
+impl_operation!(
+    ForwardVanillaRnn,
+    Direction::Forward,
+    OperationType::VanillaRnn
+);
+impl_operation!(
+    BackwardVanillaRnn,
+    Direction::Backward,
+    OperationType::VanillaRnn
 );
