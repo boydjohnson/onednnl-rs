@@ -1,8 +1,5 @@
 use {
-    super::{
-        config::{au_gru::AuGruConfig, PrimitiveConfig},
-        Direction, DirectionT, Operation, PropType,
-    },
+    super::{config::PrimitiveConfig, Direction, Operation, PropType},
     crate::{engine::Engine, error::DnnlError},
     onednnl_sys::dnnl_primitive_desc_t,
     std::sync::Arc,

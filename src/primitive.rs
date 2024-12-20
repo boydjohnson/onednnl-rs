@@ -1,5 +1,8 @@
 use {
-    config::{au_gru::AuGruConfig, PrimitiveConfig},
+    config::{
+        au_gru::{BackwardAuGruConfig, ForwardAuGruConfig},
+        PrimitiveConfig,
+    },
     onednnl_sys::dnnl_prop_kind_t,
 };
 
@@ -82,14 +85,22 @@ impl PropType<Backward> for PropBackward {
     const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_backward;
 }
 
-pub struct AuGru<D: Direction, P: PropType<D>> {
-    pub direction: D,
+pub struct ForwardAuGru<P: PropType<Forward>> {
     pub prop_type: P,
 }
 
-impl<'a, D: Direction, P: PropType<D>> Operation<'a, D, P> for AuGru<D, P> {
+impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardAuGru<P> {
     const TYPE: OperationType = OperationType::Augru;
-    type OperationConfig = AuGruConfig<'a>;
+    type OperationConfig = ForwardAuGruConfig<'a>;
+}
+
+pub struct BackwardAuGru<P: PropType<Backward>> {
+    pub prop_type: P,
+}
+
+impl<'a, P: PropType<Backward>> Operation<'a, Backward, P> for BackwardAuGru<P> {
+    const TYPE: OperationType = OperationType::Augru;
+    type OperationConfig = BackwardAuGruConfig<'a>;
 }
 
 // pub struct BatchNorm<D: Direction, P: PropType<D>> {
