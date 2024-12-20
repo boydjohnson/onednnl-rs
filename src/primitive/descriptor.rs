@@ -1,52 +1,42 @@
-use {super::Operation, crate::error::DnnlError, onednnl_sys::dnnl_primitive_desc_t};
+use {
+    super::{
+        config::{au_gru::AuGruConfig, PrimitiveConfig},
+        Direction, DirectionT, Operation, PropType,
+    },
+    crate::{engine::Engine, error::DnnlError},
+    onednnl_sys::dnnl_primitive_desc_t,
+    std::sync::Arc,
+};
 
 pub struct PrimitiveDescriptor {
     pub(crate) handle: dnnl_primitive_desc_t,
 }
 
 impl PrimitiveDescriptor {
-    pub fn new<O: Operation>() -> Result<Self, DnnlError> {
-        match (O::DIRECTION, O::TYPE) {
-            (super::Direction::Forward, super::OperationType::Augru) => {
-                todo!()
-            }
-            (super::Direction::Forward, super::OperationType::BatchNormalization) => todo!(),
-            (super::Direction::Forward, super::OperationType::Binary) => todo!(),
-            (super::Direction::Forward, super::OperationType::Concat) => todo!(),
-            (super::Direction::Forward, super::OperationType::Convolution) => todo!(),
-            (super::Direction::Forward, super::OperationType::Deconvolution) => todo!(),
-            (super::Direction::Forward, super::OperationType::Eltwise) => todo!(),
-            (super::Direction::Forward, super::OperationType::GroupNormalization) => todo!(),
-            (super::Direction::Forward, super::OperationType::Gru) => todo!(),
-            (super::Direction::Forward, super::OperationType::InnerProduct) => todo!(),
-            (super::Direction::Forward, super::OperationType::LayerNormalization) => todo!(),
-            (super::Direction::Forward, super::OperationType::LbrAuGru) => todo!(),
-            (super::Direction::Forward, super::OperationType::Lrn) => todo!(),
-            (super::Direction::Forward, super::OperationType::Lstm) => todo!(),
-            (super::Direction::Forward, super::OperationType::MatMul) => todo!(),
-            (super::Direction::Forward, super::OperationType::PRelu) => todo!(),
-            (super::Direction::Forward, super::OperationType::Shuffle) => todo!(),
-            (super::Direction::Forward, super::OperationType::Softmax) => todo!(),
-            (super::Direction::Forward, super::OperationType::VanillaRnn) => todo!(),
-            (super::Direction::Backward, super::OperationType::Augru) => todo!(),
-            (super::Direction::Backward, super::OperationType::BatchNormalization) => todo!(),
-            (super::Direction::Backward, super::OperationType::Binary) => todo!(),
-            (super::Direction::Backward, super::OperationType::Concat) => todo!(),
-            (super::Direction::Backward, super::OperationType::Convolution) => todo!(),
-            (super::Direction::Backward, super::OperationType::Deconvolution) => todo!(),
-            (super::Direction::Backward, super::OperationType::Eltwise) => todo!(),
-            (super::Direction::Backward, super::OperationType::GroupNormalization) => todo!(),
-            (super::Direction::Backward, super::OperationType::Gru) => todo!(),
-            (super::Direction::Backward, super::OperationType::InnerProduct) => todo!(),
-            (super::Direction::Backward, super::OperationType::LayerNormalization) => todo!(),
-            (super::Direction::Backward, super::OperationType::LbrAuGru) => todo!(),
-            (super::Direction::Backward, super::OperationType::Lrn) => todo!(),
-            (super::Direction::Backward, super::OperationType::Lstm) => todo!(),
-            (super::Direction::Backward, super::OperationType::MatMul) => todo!(),
-            (super::Direction::Backward, super::OperationType::PRelu) => todo!(),
-            (super::Direction::Backward, super::OperationType::Shuffle) => todo!(),
-            (super::Direction::Backward, super::OperationType::Softmax) => todo!(),
-            (super::Direction::Backward, super::OperationType::VanillaRnn) => todo!(),
+    pub fn new<'a, D: Direction, P: PropType<D>, O: Operation<'a, D, P>>(
+        config: O::OperationConfig,
+        engine: Arc<Engine>,
+    ) -> Result<Self, DnnlError> {
+        match O::TYPE {
+            super::OperationType::Augru => config.create_primitive_desc(engine),
+            super::OperationType::BatchNormalization => todo!(),
+            super::OperationType::Binary => todo!(),
+            super::OperationType::Concat => todo!(),
+            super::OperationType::Convolution => todo!(),
+            super::OperationType::Deconvolution => todo!(),
+            super::OperationType::Eltwise => todo!(),
+            super::OperationType::GroupNormalization => todo!(),
+            super::OperationType::Gru => todo!(),
+            super::OperationType::InnerProduct => todo!(),
+            super::OperationType::LayerNormalization => todo!(),
+            super::OperationType::LbrAuGru => todo!(),
+            super::OperationType::Lrn => todo!(),
+            super::OperationType::Lstm => todo!(),
+            super::OperationType::MatMul => todo!(),
+            super::OperationType::PRelu => todo!(),
+            super::OperationType::Shuffle => todo!(),
+            super::OperationType::Softmax => todo!(),
+            super::OperationType::VanillaRnn => todo!(),
         }
     }
 }

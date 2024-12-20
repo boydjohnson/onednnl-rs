@@ -1,10 +1,31 @@
+use {
+    config::{au_gru::AuGruConfig, PrimitiveConfig},
+    onednnl_sys::dnnl_prop_kind_t,
+};
+
 pub mod attributes;
 pub mod config;
 pub mod descriptor;
 
-pub enum Direction {
+pub trait Direction {
+    const KIND: DirectionT;
+}
+
+pub enum DirectionT {
     Forward,
     Backward,
+}
+
+pub struct Forward;
+
+pub struct Backward;
+
+impl Direction for Forward {
+    const KIND: DirectionT = DirectionT::Forward;
+}
+
+impl Direction for Backward {
+    const KIND: DirectionT = DirectionT::Backward;
 }
 
 pub enum OperationType {
@@ -29,133 +50,161 @@ pub enum OperationType {
     VanillaRnn,
 }
 
-pub trait Operation {
-    const DIRECTION: Direction;
+#[derive(Debug, Copy, Clone)]
+pub enum PropForward {
+    Training,
+    Inference,
+}
 
+pub enum PropBackward {
+    Backward,
+    Weights,
+    Bias,
+}
+
+pub struct PropAny;
+
+pub trait Operation<'a, D: Direction, P: PropType<D>> {
     const TYPE: OperationType;
+
+    type OperationConfig: PrimitiveConfig<'a, D, P>;
 }
 
-macro_rules! impl_operation {
-    ($t:ident, $dir:expr, $op:expr) => {
-        pub struct $t;
-
-        impl Operation for $t {
-            const DIRECTION: Direction = $dir;
-            const TYPE: OperationType = $op;
-        }
-    };
+pub trait PropType<D> {
+    const KIND: dnnl_prop_kind_t::Type;
 }
 
-impl_operation!(ForwardAuGru, Direction::Forward, OperationType::Augru);
-impl_operation!(BackwardAuGru, Direction::Backward, OperationType::Augru);
+impl PropType<Forward> for PropForward {
+    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_forward;
+}
 
-impl_operation!(
-    ForwardBatchNorm,
-    Direction::Forward,
-    OperationType::BatchNormalization
-);
-impl_operation!(
-    BackwardBatchNorm,
-    Direction::Backward,
-    OperationType::BatchNormalization
-);
+impl PropType<Backward> for PropBackward {
+    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_backward;
+}
 
-impl_operation!(ForwardBinary, Direction::Forward, OperationType::Binary);
-impl_operation!(BackwardBinary, Direction::Backward, OperationType::Binary);
+pub struct AuGru<D: Direction, P: PropType<D>> {
+    pub direction: D,
+    pub prop_type: P,
+}
 
-impl_operation!(ForwardConcat, Direction::Forward, OperationType::Concat);
-impl_operation!(BackwardConcat, Direction::Backward, OperationType::Concat);
+impl<'a, D: Direction, P: PropType<D>> Operation<'a, D, P> for AuGru<D, P> {
+    const TYPE: OperationType = OperationType::Augru;
+    type OperationConfig = AuGruConfig<'a>;
+}
 
-impl_operation!(
-    ForwardConvolution,
-    Direction::Forward,
-    OperationType::Convolution
-);
-impl_operation!(
-    BackwardConvolution,
-    Direction::Backward,
-    OperationType::Convolution
-);
+// pub struct BatchNorm<D: Direction, P: PropType<D>> {
+//     pub direction: D,
+//     pub prop_type: P,
+// }
 
-impl_operation!(
-    ForwardDeconvolution,
-    Direction::Forward,
-    OperationType::Deconvolution
-);
-impl_operation!(
-    BackwardDeconvolution,
-    Direction::Backward,
-    OperationType::Deconvolution
-);
+// impl<D: Direction, P: PropType<D>> Operation<D, P> for BatchNorm<D, P> {
+//     const TYPE: OperationType = OperationType::BatchNormalization;
 
-impl_operation!(ForwardEltwise, Direction::Forward, OperationType::Eltwise);
-impl_operation!(BackwardEltwise, Direction::Backward, OperationType::Eltwise);
+//     pub type OperationConfig = BatchNormConfig<D, P>;
+// }
 
-impl_operation!(
-    ForwardGroupNorm,
-    Direction::Forward,
-    OperationType::GroupNormalization
-);
-impl_operation!(
-    BackwardGroupNorm,
-    Direction::Backward,
-    OperationType::GroupNormalization
-);
+// pub struct Binary<D: Direction, P: PropType<D>> {
+//     pub direction: D,
+//     pub prop_type: P,
+// }
 
-impl_operation!(ForwardGru, Direction::Forward, OperationType::Gru);
-impl_operation!(BackwardGru, Direction::Backward, OperationType::Gru);
+// impl<D: Direction, P: PropType<D>> Operation for Binary<D, P> {
+//     const TYPE: OperationType = OperationType::Binary;
+// }
 
-impl_operation!(
-    ForwardInnerProduct,
-    Direction::Forward,
-    OperationType::InnerProduct
-);
-impl_operation!(
-    BackwardInnerProduct,
-    Direction::Backward,
-    OperationType::InnerProduct
-);
+// impl_operation!(ForwardConcat, Direction::Forward, OperationType::Concat);
+// impl_operation!(BackwardConcat, Direction::Backward, OperationType::Concat);
 
-impl_operation!(
-    ForwardLayerNorm,
-    Direction::Forward,
-    OperationType::LayerNormalization
-);
-impl_operation!(
-    BackwardLayerNorm,
-    Direction::Backward,
-    OperationType::LayerNormalization
-);
+// impl_operation!(
+//     ForwardConvolution,
+//     Direction::Forward,
+//     OperationType::Convolution
+// );
+// impl_operation!(
+//     BackwardConvolution,
+//     Direction::Backward,
+//     OperationType::Convolution
+// );
 
-impl_operation!(ForwardLbrAuGru, Direction::Forward, OperationType::LbrAuGru);
-impl_operation!(
-    BackwardLbrAuGru,
-    Direction::Backward,
-    OperationType::LbrAuGru
-);
+// impl_operation!(
+//     ForwardDeconvolution,
+//     Direction::Forward,
+//     OperationType::Deconvolution
+// );
+// impl_operation!(
+//     BackwardDeconvolution,
+//     Direction::Backward,
+//     OperationType::Deconvolution
+// );
 
-impl_operation!(ForwardLrn, Direction::Forward, OperationType::Lrn);
-impl_operation!(BackwardLrn, Direction::Backward, OperationType::Lrn);
+// impl_operation!(ForwardEltwise, Direction::Forward, OperationType::Eltwise);
+// impl_operation!(BackwardEltwise, Direction::Backward, OperationType::Eltwise);
 
-impl_operation!(ForwardLstm, Direction::Forward, OperationType::Lstm);
-impl_operation!(BackwardLstm, Direction::Backward, OperationType::Lstm);
+// impl_operation!(
+//     ForwardGroupNorm,
+//     Direction::Forward,
+//     OperationType::GroupNormalization
+// );
+// impl_operation!(
+//     BackwardGroupNorm,
+//     Direction::Backward,
+//     OperationType::GroupNormalization
+// );
 
-impl_operation!(ForwardMatMul, Direction::Forward, OperationType::MatMul);
-impl_operation!(BackwardMatMul, Direction::Backward, OperationType::MatMul);
+// impl_operation!(ForwardGru, Direction::Forward, OperationType::Gru);
+// impl_operation!(BackwardGru, Direction::Backward, OperationType::Gru);
 
-impl_operation!(ForwardPRelu, Direction::Forward, OperationType::PRelu);
-impl_operation!(BackwardPRelu, Direction::Backward, OperationType::PRelu);
+// impl_operation!(
+//     ForwardInnerProduct,
+//     Direction::Forward,
+//     OperationType::InnerProduct
+// );
+// impl_operation!(
+//     BackwardInnerProduct,
+//     Direction::Backward,
+//     OperationType::InnerProduct
+// );
 
-impl_operation!(ForwardShuffle, Direction::Forward, OperationType::Shuffle);
-impl_operation!(BackwardShuffle, Direction::Backward, OperationType::Shuffle);
+// impl_operation!(
+//     ForwardLayerNorm,
+//     Direction::Forward,
+//     OperationType::LayerNormalization
+// );
+// impl_operation!(
+//     BackwardLayerNorm,
+//     Direction::Backward,
+//     OperationType::LayerNormalization
+// );
 
-impl_operation!(
-    ForwardVanillaRnn,
-    Direction::Forward,
-    OperationType::VanillaRnn
-);
-impl_operation!(
-    BackwardVanillaRnn,
-    Direction::Backward,
-    OperationType::VanillaRnn
-);
+// impl_operation!(ForwardLbrAuGru, Direction::Forward, OperationType::LbrAuGru);
+// impl_operation!(
+//     BackwardLbrAuGru,
+//     Direction::Backward,
+//     OperationType::LbrAuGru
+// );
+
+// impl_operation!(ForwardLrn, Direction::Forward, OperationType::Lrn);
+// impl_operation!(BackwardLrn, Direction::Backward, OperationType::Lrn);
+
+// impl_operation!(ForwardLstm, Direction::Forward, OperationType::Lstm);
+// impl_operation!(BackwardLstm, Direction::Backward, OperationType::Lstm);
+
+// impl_operation!(ForwardMatMul, Direction::Forward, OperationType::MatMul);
+// impl_operation!(BackwardMatMul, Direction::Backward, OperationType::MatMul);
+
+// impl_operation!(ForwardPRelu, Direction::Forward, OperationType::PRelu);
+// impl_operation!(BackwardPRelu, Direction::Backward, OperationType::PRelu);
+
+// impl_operation!(ForwardShuffle, Direction::Forward, OperationType::Shuffle);
+// impl_operation!(BackwardShuffle, Direction::Backward, OperationType::Shuffle);
+
+// impl_operation!(
+//     ForwardVanillaRnn,
+//     Direction::Forward,
+//     OperationType::VanillaRnn
+// );
+// impl_operation!(
+//     BackwardVanillaRnn,
+//     Direction::Backward,
+//     OperationType::VanillaRnn
+// );
