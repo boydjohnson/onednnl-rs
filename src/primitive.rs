@@ -1,10 +1,17 @@
 use {
+    crate::{engine::Engine, error::DnnlError},
     config::{
         au_gru::{BackwardAuGruConfig, ForwardAuGruConfig},
+        batch_norm::ForwardBatchNormConfig,
         binary::ForwardBinaryConfig,
         PrimitiveConfig,
     },
-    onednnl_sys::dnnl_prop_kind_t,
+    descriptor::PrimitiveDescriptor,
+    onednnl_sys::{
+        dnnl_primitive_create, dnnl_primitive_destroy, dnnl_primitive_t, dnnl_prop_kind_t,
+        dnnl_status_t,
+    },
+    std::sync::Arc,
 };
 
 pub mod attributes;
@@ -122,10 +129,15 @@ impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardBinary<PropForw
     type OperationConfig = ForwardBinaryConfig<'a>;
 }
 
-// pub struct BatchNorm<D: Direction, P: PropType<D>> {
-//     pub direction: D,
-//     pub prop_type: P,
-// }
+pub struct ForwardBatchNorm<P: PropType<Forward>> {
+    pub prop_type: P,
+}
+
+impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardBatchNorm<P> {
+    const TYPE: OperationType = OperationType::BatchNormalization;
+
+    type OperationConfig = ForwardBatchNormConfig<'a>;
+}
 
 // impl<D: Direction, P: PropType<D>> Operation<D, P> for BatchNorm<D, P> {
 //     const TYPE: OperationType = OperationType::BatchNormalization;
@@ -238,3 +250,82 @@ impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardBinary<PropForw
 //     Direction::Backward,
 //     OperationType::VanillaRnn
 // );
+
+pub struct Primitive {
+    pub(crate) handle: dnnl_primitive_t,
+    pub desc: PrimitiveDescriptor,
+    pub engine: Arc<Engine>,
+}
+
+impl Primitive {
+    /// Creates a new `Primitive`.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use onednnl::primitive::{Forward, PropForwardInference};
+    /// use onednnl::engine::Engine;
+    /// use onednnl::primitive::ForwardBinary;
+    /// use onednnl::primitive::config::binary::ForwardBinaryConfig;
+    /// use onednnl::primitive::Primitive;
+    /// use onednnl_sys::dnnl_alg_kind_t;
+    /// use onednnl::memory::format_tag::x;
+    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
+    /// use onednnl::memory::descriptor::MemoryDescriptor;
+    ///
+    ///
+    ///
+    /// let engine = Engine::new(Engine::CPU, 0).unwrap();
+    ///
+    /// let src0_desc = MemoryDescriptor::new::<1, x>([15], dnnl_f32).unwrap();
+    /// let src1_desc = MemoryDescriptor::new::<1, x>([15], dnnl_f32).unwrap();
+    /// let dst_desc = MemoryDescriptor::new::<1, x>([15], dnnl_f32).unwrap();
+    ///
+    /// // Define a forward binary config
+    /// let binary_config = ForwardBinaryConfig {
+    ///     alg_kind: dnnl_alg_kind_t::dnnl_binary_add, // Example: addition operation
+    ///     src0_desc: &src0_desc,
+    ///     src1_desc: &src1_desc,
+    ///     dst_desc: &dst_desc,
+    ///     attr: std::ptr::null_mut(), // Default attributes
+    /// };
+    ///
+    /// let primitive = Primitive::new::<_, PropForwardInference, ForwardBinary<_>>(binary_config, engine);
+    ///
+    /// assert!(primitive.is_ok());
+    /// ```
+    pub fn new<'a, D: Direction, P: PropType<D>, O: Operation<'a, D, P>>(
+        config: O::OperationConfig,
+        engine: Arc<Engine>,
+    ) -> Result<Primitive, DnnlError> {
+        let desc = config.create_primitive_desc(engine.clone())?;
+        Self::from_descriptor(desc, engine)
+    }
+
+    pub fn from_descriptor(
+        desc: PrimitiveDescriptor,
+        engine: Arc<Engine>,
+    ) -> Result<Primitive, DnnlError> {
+        let mut handle = std::ptr::null_mut();
+
+        let status = unsafe { dnnl_primitive_create(&mut handle, desc.handle) };
+
+        if status == dnnl_status_t::dnnl_success {
+            Ok(Self {
+                handle,
+                desc,
+                engine,
+            })
+        } else {
+            Err(status.into())
+        }
+    }
+}
+
+impl Drop for Primitive {
+    fn drop(&mut self) {
+        unsafe {
+            dnnl_primitive_destroy(self.handle);
+        }
+    }
+}

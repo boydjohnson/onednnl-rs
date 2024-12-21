@@ -1,7 +1,7 @@
 use {
     super::{config::PrimitiveConfig, Direction, Operation, PropType},
     crate::{engine::Engine, error::DnnlError},
-    onednnl_sys::dnnl_primitive_desc_t,
+    onednnl_sys::{dnnl_primitive_desc_destroy, dnnl_primitive_desc_t},
     std::sync::Arc,
 };
 
@@ -56,5 +56,11 @@ impl PrimitiveDescriptor {
         engine: Arc<Engine>,
     ) -> Result<Self, DnnlError> {
         config.create_primitive_desc(engine)
+    }
+}
+
+impl Drop for PrimitiveDescriptor {
+    fn drop(&mut self) {
+        unsafe { dnnl_primitive_desc_destroy(self.handle) };
     }
 }

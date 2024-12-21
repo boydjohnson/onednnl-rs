@@ -5,6 +5,7 @@ use {
 };
 
 pub mod au_gru;
+pub mod batch_norm;
 pub mod binary;
 
 pub trait PrimitiveConfig<'a, D: Direction, P: PropType<D>> {
