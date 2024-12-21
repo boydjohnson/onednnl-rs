@@ -1,6 +1,7 @@
 use {
     config::{
         au_gru::{BackwardAuGruConfig, ForwardAuGruConfig},
+        binary::ForwardBinaryConfig,
         PrimitiveConfig,
     },
     onednnl_sys::dnnl_prop_kind_t,
@@ -54,17 +55,21 @@ pub enum OperationType {
 }
 
 #[derive(Debug, Copy, Clone)]
-pub enum PropForward {
-    Training,
-    Inference,
-}
+pub struct PropForwardTraining;
 
-pub enum PropBackward {
-    Backward,
-    Weights,
-    Bias,
-}
+#[derive(Debug, Clone, Copy)]
+pub struct PropForwardInference;
 
+#[derive(Debug, Clone, Copy)]
+pub struct PropBackward;
+
+#[derive(Debug, Clone, Copy)]
+pub struct PropBackwardBias;
+
+#[derive(Debug, Clone, Copy)]
+pub struct PropBackwardWeights;
+
+#[derive(Debug, Clone, Copy)]
 pub struct PropAny;
 
 pub trait Operation<'a, D: Direction, P: PropType<D>> {
@@ -77,8 +82,12 @@ pub trait PropType<D> {
     const KIND: dnnl_prop_kind_t::Type;
 }
 
-impl PropType<Forward> for PropForward {
+impl PropType<Forward> for PropForwardInference {
     const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_forward;
+}
+
+impl PropType<Forward> for PropForwardTraining {
+    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_forward_inference;
 }
 
 impl PropType<Backward> for PropBackward {
@@ -101,6 +110,16 @@ pub struct BackwardAuGru<P: PropType<Backward>> {
 impl<'a, P: PropType<Backward>> Operation<'a, Backward, P> for BackwardAuGru<P> {
     const TYPE: OperationType = OperationType::Augru;
     type OperationConfig = BackwardAuGruConfig<'a>;
+}
+
+pub struct ForwardBinary<P: PropType<Forward>> {
+    pub prop_type: P,
+}
+
+impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardBinary<PropForwardInference> {
+    const TYPE: OperationType = OperationType::Binary;
+
+    type OperationConfig = ForwardBinaryConfig<'a>;
 }
 
 // pub struct BatchNorm<D: Direction, P: PropType<D>> {
