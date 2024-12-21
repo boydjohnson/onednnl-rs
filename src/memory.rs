@@ -108,15 +108,15 @@ impl Memory {
     /// use std::sync::Arc;
     /// use onednnl::{engine::Engine, memory::Memory, memory::descriptor::MemoryDescriptor, error::DnnlError};
     /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    /// use onednnl::memory::format_tag::abcdef;
+    /// use onednnl::memory::format_tag::abcd;
     ///
     /// let engine = Arc::new(Engine::new(Engine::CPU, 0).unwrap());
     ///
     ///     
-    /// let dims = [1, 3, 224, 224, 112, 112];
+    /// let dims = [1, 3, 224, 224];
     ///
     ///     
-    /// let mem_desc = MemoryDescriptor::new::<6, abcdef>(dims, dnnl_f32).unwrap();
+    /// let mem_desc = MemoryDescriptor::new::<4, abcd>(dims, dnnl_f32).unwrap();
     ///
     ///     
     /// let memory = Memory::new_with_library_buffer(Arc::clone(&engine), mem_desc);
