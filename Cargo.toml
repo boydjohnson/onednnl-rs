@@ -4,4 +4,4 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-onednnl-sys = { path = "../intel-onednnl-rs" }
+onednnl-sys = { git = "https://github.com/boydjohnson/onednnl-sys" }
