@@ -11,7 +11,7 @@ use {
     onednnl_sys::{
         dnnl_alg_kind_t, dnnl_data_type_t::dnnl_f32, DNNL_ARG_DST, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1,
     },
-    std::ffi::c_void,
+    std::{alloc::dealloc, ffi::c_void},
 };
 
 #[test]
@@ -71,15 +71,15 @@ pub fn test_smoke_binary_add() {
     let args = vec![
         ExecArg {
             index: DNNL_ARG_SRC_0 as i32,
-            mem: src0_memory,
+            mem: &src0_memory,
         },
         ExecArg {
             index: DNNL_ARG_SRC_1 as i32,
-            mem: src1_memory,
+            mem: &src1_memory,
         },
         ExecArg {
             index: DNNL_ARG_DST as i32,
-            mem: dst_memory,
+            mem: &dst_memory,
         },
     ];
 
@@ -90,4 +90,12 @@ pub fn test_smoke_binary_add() {
     assert_eq!(result, Ok(()));
 
     assert_eq!(output, vec![5.0, 7.0, 9.0].into());
+
+    unsafe {
+        dealloc(s0_ptr as *mut u8, layout);
+    }
+
+    unsafe {
+        dealloc(s1_ptr as *mut u8, layout);
+    }
 }

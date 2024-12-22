@@ -355,7 +355,7 @@ impl Drop for Primitive {
     }
 }
 
-pub struct ExecArg {
+pub struct ExecArg<'a> {
     pub index: i32,
-    pub mem: Memory,
+    pub mem: &'a Memory,
 }
