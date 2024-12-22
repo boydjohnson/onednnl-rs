@@ -194,8 +194,6 @@ impl Memory {
 
 impl Drop for Memory {
     fn drop(&mut self) {
-        if self.buffer_type == BufferType::LibraryAllocated {
-            unsafe { dnnl_memory_destroy(self.handle) };
-        }
+        unsafe { dnnl_memory_destroy(self.handle) };
     }
 }
