@@ -9,7 +9,7 @@ use {
 
 #[derive(Debug)]
 pub struct Stream {
-    handle: dnnl_stream_t,
+    pub(crate) handle: dnnl_stream_t,
     engine: Arc<Engine>,
 }
 

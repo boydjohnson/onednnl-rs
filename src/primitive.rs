@@ -1,5 +1,5 @@
 use {
-    crate::{engine::Engine, error::DnnlError},
+    crate::{engine::Engine, error::DnnlError, memory::Memory, stream::Stream},
     config::{
         au_gru::{BackwardAuGruConfig, ForwardAuGruConfig},
         batch_norm::ForwardBatchNormConfig,
@@ -8,8 +8,8 @@ use {
     },
     descriptor::PrimitiveDescriptor,
     onednnl_sys::{
-        dnnl_primitive_create, dnnl_primitive_destroy, dnnl_primitive_t, dnnl_prop_kind_t,
-        dnnl_status_t,
+        dnnl_exec_arg_t, dnnl_primitive_create, dnnl_primitive_destroy, dnnl_primitive_execute,
+        dnnl_primitive_t, dnnl_prop_kind_t, dnnl_status_t,
     },
     std::sync::Arc,
 };
@@ -320,6 +320,31 @@ impl Primitive {
             Err(status.into())
         }
     }
+
+    pub fn execute(&self, stream: &Stream, args: Vec<ExecArg>) -> Result<(), DnnlError> {
+        let c_args: Vec<dnnl_exec_arg_t> = args
+            .iter()
+            .map(|arg| dnnl_exec_arg_t {
+                arg: arg.index,
+                memory: arg.mem.handle,
+            })
+            .collect();
+
+        let status = unsafe {
+            dnnl_primitive_execute(
+                self.handle,
+                stream.handle,
+                c_args.len() as i32,
+                c_args.as_ptr(),
+            )
+        };
+
+        if status == dnnl_status_t::dnnl_success {
+            Ok(())
+        } else {
+            Err(status.into())
+        }
+    }
 }
 
 impl Drop for Primitive {
@@ -328,4 +353,9 @@ impl Drop for Primitive {
             dnnl_primitive_destroy(self.handle);
         }
     }
+}
+
+pub struct ExecArg {
+    pub index: i32,
+    pub mem: Memory,
 }
