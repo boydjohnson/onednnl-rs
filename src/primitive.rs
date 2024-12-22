@@ -4,6 +4,7 @@ use {
         au_gru::{BackwardAuGruConfig, ForwardAuGruConfig},
         batch_norm::ForwardBatchNormConfig,
         binary::ForwardBinaryConfig,
+        eltwise::ForwardEltwiseConfig,
         PrimitiveConfig,
     },
     descriptor::PrimitiveDescriptor,
@@ -139,117 +140,15 @@ impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardBatchNorm<P>
     type OperationConfig = ForwardBatchNormConfig<'a>;
 }
 
-// impl<D: Direction, P: PropType<D>> Operation<D, P> for BatchNorm<D, P> {
-//     const TYPE: OperationType = OperationType::BatchNormalization;
+pub struct ForwardEltwise<P: PropType<Forward>> {
+    pub prop_type: P,
+}
 
-//     pub type OperationConfig = BatchNormConfig<D, P>;
-// }
+impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardEltwise<P> {
+    const TYPE: OperationType = OperationType::Eltwise;
 
-// pub struct Binary<D: Direction, P: PropType<D>> {
-//     pub direction: D,
-//     pub prop_type: P,
-// }
-
-// impl<D: Direction, P: PropType<D>> Operation for Binary<D, P> {
-//     const TYPE: OperationType = OperationType::Binary;
-// }
-
-// impl_operation!(ForwardConcat, Direction::Forward, OperationType::Concat);
-// impl_operation!(BackwardConcat, Direction::Backward, OperationType::Concat);
-
-// impl_operation!(
-//     ForwardConvolution,
-//     Direction::Forward,
-//     OperationType::Convolution
-// );
-// impl_operation!(
-//     BackwardConvolution,
-//     Direction::Backward,
-//     OperationType::Convolution
-// );
-
-// impl_operation!(
-//     ForwardDeconvolution,
-//     Direction::Forward,
-//     OperationType::Deconvolution
-// );
-// impl_operation!(
-//     BackwardDeconvolution,
-//     Direction::Backward,
-//     OperationType::Deconvolution
-// );
-
-// impl_operation!(ForwardEltwise, Direction::Forward, OperationType::Eltwise);
-// impl_operation!(BackwardEltwise, Direction::Backward, OperationType::Eltwise);
-
-// impl_operation!(
-//     ForwardGroupNorm,
-//     Direction::Forward,
-//     OperationType::GroupNormalization
-// );
-// impl_operation!(
-//     BackwardGroupNorm,
-//     Direction::Backward,
-//     OperationType::GroupNormalization
-// );
-
-// impl_operation!(ForwardGru, Direction::Forward, OperationType::Gru);
-// impl_operation!(BackwardGru, Direction::Backward, OperationType::Gru);
-
-// impl_operation!(
-//     ForwardInnerProduct,
-//     Direction::Forward,
-//     OperationType::InnerProduct
-// );
-// impl_operation!(
-//     BackwardInnerProduct,
-//     Direction::Backward,
-//     OperationType::InnerProduct
-// );
-
-// impl_operation!(
-//     ForwardLayerNorm,
-//     Direction::Forward,
-//     OperationType::LayerNormalization
-// );
-// impl_operation!(
-//     BackwardLayerNorm,
-//     Direction::Backward,
-//     OperationType::LayerNormalization
-// );
-
-// impl_operation!(ForwardLbrAuGru, Direction::Forward, OperationType::LbrAuGru);
-// impl_operation!(
-//     BackwardLbrAuGru,
-//     Direction::Backward,
-//     OperationType::LbrAuGru
-// );
-
-// impl_operation!(ForwardLrn, Direction::Forward, OperationType::Lrn);
-// impl_operation!(BackwardLrn, Direction::Backward, OperationType::Lrn);
-
-// impl_operation!(ForwardLstm, Direction::Forward, OperationType::Lstm);
-// impl_operation!(BackwardLstm, Direction::Backward, OperationType::Lstm);
-
-// impl_operation!(ForwardMatMul, Direction::Forward, OperationType::MatMul);
-// impl_operation!(BackwardMatMul, Direction::Backward, OperationType::MatMul);
-
-// impl_operation!(ForwardPRelu, Direction::Forward, OperationType::PRelu);
-// impl_operation!(BackwardPRelu, Direction::Backward, OperationType::PRelu);
-
-// impl_operation!(ForwardShuffle, Direction::Forward, OperationType::Shuffle);
-// impl_operation!(BackwardShuffle, Direction::Backward, OperationType::Shuffle);
-
-// impl_operation!(
-//     ForwardVanillaRnn,
-//     Direction::Forward,
-//     OperationType::VanillaRnn
-// );
-// impl_operation!(
-//     BackwardVanillaRnn,
-//     Direction::Backward,
-//     OperationType::VanillaRnn
-// );
+    type OperationConfig = ForwardEltwiseConfig<'a>;
+}
 
 pub struct Primitive {
     pub(crate) handle: dnnl_primitive_t,
@@ -321,7 +220,7 @@ impl Primitive {
         }
     }
 
-    pub fn execute(&self, stream: &Stream, args: Vec<ExecArg>) -> Result<(), DnnlError> {
+    pub fn execute(&self, stream: &Stream, args: Vec<ExecArg<'_>>) -> Result<(), DnnlError> {
         let c_args: Vec<dnnl_exec_arg_t> = args
             .iter()
             .map(|arg| dnnl_exec_arg_t {
