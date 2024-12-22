@@ -1,7 +1,7 @@
 use {
     onednnl::{
         engine::Engine,
-        memory::{descriptor::MemoryDescriptor, format_tag::x, Memory},
+        memory::{buffer::AlignedBuffer, descriptor::MemoryDescriptor, format_tag::x, Memory},
         primitive::{
             config::binary::ForwardBinaryConfig, ExecArg, ForwardBinary, Primitive,
             PropForwardInference,
@@ -11,7 +11,6 @@ use {
     onednnl_sys::{
         dnnl_alg_kind_t, dnnl_data_type_t::dnnl_f32, DNNL_ARG_DST, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1,
     },
-    std::{alloc::dealloc, ffi::c_void},
 };
 
 #[test]
@@ -36,33 +35,18 @@ pub fn test_smoke_binary_add() {
     assert!(primitive.is_ok());
     let primitive = primitive.unwrap();
 
-    use std::alloc::{alloc, Layout};
-
-    // Allocate aligned memory for `src0`
-    let layout = Layout::array::<f32>(3).unwrap();
-    let s0_ptr = unsafe { alloc(layout) as *mut f32 };
-    let s0 = unsafe { std::slice::from_raw_parts_mut(s0_ptr, 3) };
-    s0.copy_from_slice(&[1.0, 2.0, 3.0]);
+    let s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap();
 
     // Allocate and initialize memory
-    let src0_memory =
-        Memory::new_with_user_buffer(engine.clone(), src0_desc, s0.as_mut_ptr() as *mut c_void)
-            .unwrap();
+    let src0_memory = Memory::new_with_user_buffer(engine.clone(), src0_desc, &s0_buffer).unwrap();
 
-    let layout = Layout::array::<f32>(3).unwrap();
-    let s1_ptr = unsafe { alloc(layout) as *mut f32 };
-    let s1 = unsafe { std::slice::from_raw_parts_mut(s1_ptr, 3) };
-    s1.copy_from_slice(&[4.0, 5.0, 6.0]);
+    let s1_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0]).unwrap();
 
-    let src1_memory =
-        Memory::new_with_user_buffer(engine.clone(), src1_desc, s1.as_mut_ptr() as *mut c_void)
-            .unwrap();
+    let src1_memory = Memory::new_with_user_buffer(engine.clone(), src1_desc, &s1_buffer).unwrap();
 
-    let mut output = vec![0.0f32; 3].into_boxed_slice();
+    let output = AlignedBuffer::<f32>::zeroed(3).unwrap();
 
-    let dst_memory =
-        Memory::new_with_user_buffer(engine.clone(), dst_desc, output.as_mut_ptr() as *mut c_void)
-            .unwrap();
+    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, &output).unwrap();
 
     // Configure the binary operation
 
@@ -89,13 +73,5 @@ pub fn test_smoke_binary_add() {
 
     assert_eq!(result, Ok(()));
 
-    assert_eq!(output, vec![5.0, 7.0, 9.0].into());
-
-    unsafe {
-        dealloc(s0_ptr as *mut u8, layout);
-    }
-
-    unsafe {
-        dealloc(s1_ptr as *mut u8, layout);
-    }
+    assert_eq!(output.as_slice(), &[5.0, 7.0, 9.0]);
 }

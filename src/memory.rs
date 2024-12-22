@@ -1,5 +1,6 @@
 use {
     crate::{engine::Engine, error::DnnlError},
+    buffer::AlignedBuffer,
     descriptor::MemoryDescriptor,
     onednnl_sys::{
         dnnl_memory, dnnl_memory_create, dnnl_memory_destroy, dnnl_memory_t, dnnl_status_t,
@@ -13,6 +14,7 @@ const DNNL_MEMORY_NONE: *mut c_void = std::ptr::null_mut();
 /// Memory with library allocated buffer
 const DNNL_MEMORY_ALLOCATE: *mut c_void = (-1isize) as *mut c_void;
 
+pub mod buffer;
 pub mod descriptor;
 #[allow(non_camel_case_types)]
 pub mod format_tag;
@@ -63,6 +65,7 @@ impl Memory {
     /// use onednnl::{engine::Engine, memory::Memory, memory::descriptor::MemoryDescriptor, error::DnnlError};
     /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
     /// use onednnl::memory::format_tag::abcdef;
+    /// use onednnl::memory::buffer::AlignedBuffer;
     ///
     /// let engine = Arc::new(Engine::new(Engine::CPU, 0).unwrap());
     ///
@@ -71,22 +74,24 @@ impl Memory {
     ///
     ///     
     /// let mem_desc = MemoryDescriptor::new::<6, abcdef>(dims, dnnl_f32).unwrap();
-    ///
-    ///     
-    /// let mut user_buffer: Vec<f32> = vec![0.0; dims.iter().copied().product::<i64>() as usize];
-    /// let buffer_ptr = user_buffer.as_mut_ptr() as *mut c_void;
-    ///
-    ///     
-    /// let memory = Memory::new_with_user_buffer(Arc::clone(&engine), mem_desc, buffer_ptr);
+    /// let buffer = AlignedBuffer::<f32>::zeroed(dims.iter().copied().product::<i64>() as usize).unwrap();
+    /// let memory = Memory::new_with_user_buffer(Arc::clone(&engine), mem_desc, &buffer);
     /// assert!(memory.is_ok());
     /// ```
-    pub fn new_with_user_buffer(
+    pub fn new_with_user_buffer<T>(
         engine: Arc<Engine>,
         desc: MemoryDescriptor,
-        buffer: *mut c_void,
+        buffer: &AlignedBuffer<T>,
     ) -> Result<Self, DnnlError> {
         let mut handle = std::ptr::null_mut::<dnnl_memory>();
-        let status = unsafe { dnnl_memory_create(&mut handle, desc.handle, engine.handle, buffer) };
+        let status = unsafe {
+            dnnl_memory_create(
+                &mut handle,
+                desc.handle,
+                engine.handle,
+                buffer.ptr.as_ptr() as *mut c_void,
+            )
+        };
 
         if status == dnnl_status_t::dnnl_success {
             Ok(Memory {
