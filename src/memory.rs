@@ -17,7 +17,7 @@ pub mod descriptor;
 #[allow(non_camel_case_types)]
 pub mod format_tag;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Copy, Clone)]
 pub enum BufferType {
     UserAllocated,
     LibraryAllocated,
@@ -194,6 +194,8 @@ impl Memory {
 
 impl Drop for Memory {
     fn drop(&mut self) {
-        unsafe { dnnl_memory_destroy(self.handle) };
+        if self.buffer_type == BufferType::LibraryAllocated {
+            unsafe { dnnl_memory_destroy(self.handle) };
+        }
     }
 }
