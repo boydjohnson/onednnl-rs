@@ -14,6 +14,8 @@ pub enum DnnlError {
     LastImplReached,
     NotRequired,
     Success,
+    InvalidLayout,
+    NonNullViolated,
 }
 
 impl From<dnnl_status_t::Type> for DnnlError {
