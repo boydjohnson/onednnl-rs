@@ -80,3 +80,6 @@ impl Drop for Engine {
         unsafe { dnnl_engine_destroy(self.handle) };
     }
 }
+
+unsafe impl Sync for Engine {}
+unsafe impl Send for Engine {}
