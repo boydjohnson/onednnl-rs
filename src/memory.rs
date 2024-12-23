@@ -202,3 +202,6 @@ impl Drop for Memory {
         unsafe { dnnl_memory_destroy(self.handle) };
     }
 }
+
+unsafe impl Sync for Memory {}
+unsafe impl Send for Memory {}
