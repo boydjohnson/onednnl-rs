@@ -114,7 +114,7 @@ pub fn test_smoke_matmul() {
 
     let zero_bias_desc = MemoryDescriptor::new::<3, abc>([1, 2, 2], DataType::F32).unwrap();
 
-    // Step 5: Configure the MatMul Operation
+    // Step 4: Configure the MatMul Operation
     // Set up ForwardMatMulConfig with references to the memory descriptors
     let matmul_config = ForwardMatMulConfig {
         src_desc: &src_desc,
@@ -124,13 +124,13 @@ pub fn test_smoke_matmul() {
         attr: std::ptr::null_mut(), // No special attributes
     };
 
-    // Step 6: Create and Configure the MatMul Primitive
+    // Step 5: Create and Configure the MatMul Primitive
     // Instantiate the matmul primitive using the configuration
     let primitive =
         Primitive::new::<_, PropForwardInference, ForwardMatMul<_>>(matmul_config, engine.clone())
             .expect("Failed to create MatMul primitive");
 
-    // Step 4: Create Memory Objects
+    // Step 6: Create Memory Objects
     // Wrap the buffers into oneDNN Memory objects
     let src_memory = Memory::new_with_user_buffer(engine.clone(), src_desc, &src_buffer)
         .expect("Failed to create src memory");

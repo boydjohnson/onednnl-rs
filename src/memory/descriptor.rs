@@ -223,8 +223,7 @@ impl MemoryDescriptor {
     ///
     /// ```
     pub fn get_size(&self) -> usize {
-        let size = unsafe { dnnl_memory_desc_get_size(self.handle) };
-        size
+        unsafe { dnnl_memory_desc_get_size(self.handle) }
     }
 }
 

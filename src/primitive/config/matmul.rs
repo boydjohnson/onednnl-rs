@@ -1,11 +1,11 @@
-use onednnl_sys::{dnnl_matmul_primitive_desc_create, dnnl_primitive_attr_t, dnnl_status_t};
-
-use crate::{
-    memory::descriptor::MemoryDescriptor,
-    primitive::{descriptor::PrimitiveDescriptor, Forward, PropType},
+use {
+    super::PrimitiveConfig,
+    crate::{
+        memory::descriptor::MemoryDescriptor,
+        primitive::{descriptor::PrimitiveDescriptor, Forward, PropType},
+    },
+    onednnl_sys::{dnnl_matmul_primitive_desc_create, dnnl_primitive_attr_t, dnnl_status_t},
 };
-
-use super::PrimitiveConfig;
 
 pub struct ForwardMatMulConfig<'a> {
     pub src_desc: &'a MemoryDescriptor,
