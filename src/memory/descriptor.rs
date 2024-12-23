@@ -1,7 +1,8 @@
 use onednnl_sys::{
-    dnnl_data_type_t, dnnl_dim_t, dnnl_memory_desc_clone, dnnl_memory_desc_create_with_blob,
-    dnnl_memory_desc_create_with_tag, dnnl_memory_desc_destroy, dnnl_memory_desc_equal,
-    dnnl_memory_desc_get_blob, dnnl_memory_desc_get_size, dnnl_memory_desc_t, dnnl_status_t,
+    dnnl_data_type_t, dnnl_dim_t, dnnl_format_tag_t::dnnl_format_tag_any, dnnl_memory_desc_clone,
+    dnnl_memory_desc_create_with_blob, dnnl_memory_desc_create_with_tag, dnnl_memory_desc_destroy,
+    dnnl_memory_desc_equal, dnnl_memory_desc_get_blob, dnnl_memory_desc_get_size,
+    dnnl_memory_desc_t, dnnl_status_t,
 };
 
 #[derive(Debug)]
@@ -9,9 +10,7 @@ pub struct MemoryDescriptor {
     pub(crate) handle: dnnl_memory_desc_t,
 }
 
-use crate::error::DnnlError;
-
-use super::format_tag::FormatTag;
+use {super::format_tag::FormatTag, crate::error::DnnlError};
 
 impl MemoryDescriptor {
     /// Create a new MemoryDescriptor
@@ -55,6 +54,35 @@ impl MemoryDescriptor {
     pub fn new_from_blob(blob: *mut u8) -> Result<Self, DnnlError> {
         let mut handle: dnnl_memory_desc_t = std::ptr::null_mut();
         let status = unsafe { dnnl_memory_desc_create_with_blob(&mut handle, blob) };
+
+        if status == dnnl_status_t::dnnl_success {
+            Ok(Self { handle })
+        } else {
+            Err(status.into())
+        }
+    }
+
+    /// Create a new MemoryDescriptor
+    /// ```
+    /// use onednnl::memory::descriptor::MemoryDescriptor;
+    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
+    ///
+    ///
+    /// let md = MemoryDescriptor::new_any(&[15, 15], dnnl_f32);
+    ///
+    /// assert!(md.is_ok());
+    /// ```
+    pub fn new_any(dims: &[i64], data_type: dnnl_data_type_t::Type) -> Result<Self, DnnlError> {
+        let mut handle: dnnl_memory_desc_t = std::ptr::null_mut();
+        let status = unsafe {
+            dnnl_memory_desc_create_with_tag(
+                &mut handle,
+                dims.len() as i32,
+                dims.as_ptr(),
+                data_type,
+                dnnl_format_tag_any,
+            )
+        };
 
         if status == dnnl_status_t::dnnl_success {
             Ok(Self { handle })
@@ -212,4 +240,11 @@ impl Drop for MemoryDescriptor {
             dnnl_memory_desc_destroy(self.handle);
         }
     }
+}
+
+pub struct DataType;
+
+impl DataType {
+    pub const F32: dnnl_data_type_t::Type = dnnl_data_type_t::dnnl_f32;
+    pub const F64: dnnl_data_type_t::Type = dnnl_data_type_t::dnnl_f64;
 }
