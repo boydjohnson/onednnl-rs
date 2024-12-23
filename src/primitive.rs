@@ -5,6 +5,7 @@ use {
         batch_norm::ForwardBatchNormConfig,
         binary::ForwardBinaryConfig,
         eltwise::ForwardEltwiseConfig,
+        matmul::ForwardMatMulConfig,
         PrimitiveConfig,
     },
     descriptor::PrimitiveDescriptor,
@@ -148,6 +149,16 @@ impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardEltwise<P> {
     const TYPE: OperationType = OperationType::Eltwise;
 
     type OperationConfig = ForwardEltwiseConfig<'a>;
+}
+
+pub struct ForwardMatMul<P: PropType<Forward>> {
+    pub prop_type: P,
+}
+
+impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardMatMul<P> {
+    const TYPE: OperationType = OperationType::MatMul;
+
+    type OperationConfig = ForwardMatMulConfig<'a>;
 }
 
 pub struct Primitive {
