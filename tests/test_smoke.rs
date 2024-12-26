@@ -3,8 +3,8 @@ use {
         engine::Engine,
         memory::{
             buffer::AlignedBuffer,
-            descriptor::{DataType, MemoryDescriptor},
-            format_tag::{abc, x},
+            descriptor::{DataType, DataTypeQuery, DimsQuery, MemoryDescriptor, NDimsQuery},
+            format_tag::{abc, abcd, x},
             Memory,
         },
         primitive::{
@@ -195,4 +195,22 @@ pub fn test_smoke_matmul() {
         expected.as_slice(),
         "MatMul output does not match expected results"
     );
+}
+
+#[test]
+pub fn test_smoke_memory_desc() {
+    let md = MemoryDescriptor::new::<4, abcd>([1, 3, 228, 228], dnnl_f32).unwrap();
+
+    let ndims = md.query::<NDimsQuery>().unwrap();
+    println!("Number of dimensions: {}", ndims);
+
+    let data_type = md.query::<DataTypeQuery>().unwrap();
+    println!("Data type: {:?}", data_type);
+
+    let dims = md.query::<DimsQuery>().unwrap();
+    println!("Dimensions: {:?}", dims);
+
+    assert_eq!(ndims, 4);
+    assert_eq!(data_type, dnnl_f32);
+    assert_eq!(dims, vec![1, 3, 228, 228]);
 }
