@@ -16,6 +16,7 @@ pub enum DnnlError {
     Success,
     InvalidLayout,
     NonNullViolated,
+    InvalidQueryOutput,
 }
 
 impl From<dnnl_status_t::Type> for DnnlError {

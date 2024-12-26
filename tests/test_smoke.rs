@@ -3,8 +3,8 @@ use {
         engine::Engine,
         memory::{
             buffer::AlignedBuffer,
-            descriptor::{DataType, MemoryDescriptor},
-            format_tag::{abc, x},
+            descriptor::{DataType, DataTypeQuery, DimsQuery, MemoryDescriptor, NDimsQuery},
+            format_tag::{abc, abcd, x},
             Memory,
         },
         primitive::{
@@ -114,7 +114,7 @@ pub fn test_smoke_matmul() {
 
     let zero_bias_desc = MemoryDescriptor::new::<3, abc>([1, 2, 2], DataType::F32).unwrap();
 
-    // Step 5: Configure the MatMul Operation
+    // Step 4: Configure the MatMul Operation
     // Set up ForwardMatMulConfig with references to the memory descriptors
     let matmul_config = ForwardMatMulConfig {
         src_desc: &src_desc,
@@ -124,13 +124,13 @@ pub fn test_smoke_matmul() {
         attr: std::ptr::null_mut(), // No special attributes
     };
 
-    // Step 6: Create and Configure the MatMul Primitive
+    // Step 5: Create and Configure the MatMul Primitive
     // Instantiate the matmul primitive using the configuration
     let primitive =
         Primitive::new::<_, PropForwardInference, ForwardMatMul<_>>(matmul_config, engine.clone())
             .expect("Failed to create MatMul primitive");
 
-    // Step 4: Create Memory Objects
+    // Step 6: Create Memory Objects
     // Wrap the buffers into oneDNN Memory objects
     let src_memory = Memory::new_with_user_buffer(engine.clone(), src_desc, &src_buffer)
         .expect("Failed to create src memory");
@@ -195,4 +195,22 @@ pub fn test_smoke_matmul() {
         expected.as_slice(),
         "MatMul output does not match expected results"
     );
+}
+
+#[test]
+pub fn test_smoke_memory_desc() {
+    let md = MemoryDescriptor::new::<4, abcd>([1, 3, 228, 228], dnnl_f32).unwrap();
+
+    let ndims = md.query::<NDimsQuery>().unwrap();
+    println!("Number of dimensions: {}", ndims);
+
+    let data_type = md.query::<DataTypeQuery>().unwrap();
+    println!("Data type: {:?}", data_type);
+
+    let dims = md.query::<DimsQuery>().unwrap();
+    println!("Dimensions: {:?}", dims);
+
+    assert_eq!(ndims, 4);
+    assert_eq!(data_type, dnnl_f32);
+    assert_eq!(dims, vec![1, 3, 228, 228]);
 }

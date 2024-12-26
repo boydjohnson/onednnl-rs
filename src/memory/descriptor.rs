@@ -1,8 +1,14 @@
-use onednnl_sys::{
-    dnnl_data_type_t, dnnl_dim_t, dnnl_format_tag_t::dnnl_format_tag_any, dnnl_memory_desc_clone,
-    dnnl_memory_desc_create_with_blob, dnnl_memory_desc_create_with_tag, dnnl_memory_desc_destroy,
-    dnnl_memory_desc_equal, dnnl_memory_desc_get_blob, dnnl_memory_desc_get_size,
-    dnnl_memory_desc_t, dnnl_status_t,
+use {
+    onednnl_sys::{
+        dnnl_data_type_t, dnnl_dim_t, dnnl_memory_desc_clone, dnnl_memory_desc_create_with_blob,
+        dnnl_memory_desc_create_with_tag, dnnl_memory_desc_destroy, dnnl_memory_desc_equal,
+        dnnl_memory_desc_get_blob, dnnl_memory_desc_get_size, dnnl_memory_desc_query,
+        dnnl_memory_desc_t, dnnl_query_t, dnnl_status_t,
+    },
+    std::{
+        alloc::{alloc, Layout},
+        ffi::c_void,
+    },
 };
 
 #[derive(Debug)]
@@ -223,8 +229,33 @@ impl MemoryDescriptor {
     ///
     /// ```
     pub fn get_size(&self) -> usize {
-        let size = unsafe { dnnl_memory_desc_get_size(self.handle) };
-        size
+        unsafe { dnnl_memory_desc_get_size(self.handle) }
+    }
+
+    // Queries the memory descriptor for various pieces of information.
+    ///
+    /// # Arguments
+    ///
+    /// * `query` - The query to perform.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the query output on success or a `DnnlError` on failure.
+    ///
+    /// ```
+    /// use onednnl::memory::descriptor::MemoryDescriptor;
+    /// use onednnl::memory::format_tag::abcd;
+    /// use onednnl::memory::descriptor::{NDimsQuery, DimsQuery, DataTypeQuery};
+    /// use onednnl_sys::dnnl_data_type_t;
+    ///
+    /// let md = MemoryDescriptor::new::<4, abcd>([1, 3, 228, 228], dnnl_data_type_t::dnnl_f32).unwrap();
+    ///
+    /// assert_eq!(md.query::<NDimsQuery>(), Ok(4));
+    /// assert_eq!(md.query::<DimsQuery>(), Ok(vec![1, 3, 228, 228]));
+    /// assert_eq!(md.query::<DataTypeQuery>(), Ok(dnnl_data_type_t::dnnl_f32));
+    /// ```
+    pub fn query<Q: Query>(&self) -> Result<Q::Output, DnnlError> {
+        Q::execute(self.handle)
     }
 }
 
@@ -242,9 +273,110 @@ impl Drop for MemoryDescriptor {
     }
 }
 
+const DNNL_MAX_NDIMS: usize = 12;
+
 pub struct DataType;
 
 impl DataType {
     pub const F32: dnnl_data_type_t::Type = dnnl_data_type_t::dnnl_f32;
     pub const F64: dnnl_data_type_t::Type = dnnl_data_type_t::dnnl_f64;
+}
+
+/// Trait representing a query to be performed
+pub trait Query {
+    /// The output type associated with the query.
+    type Output;
+
+    /// The query (what) value.
+    const QUERY: dnnl_query_t::Type;
+
+    /// Executes the query on the given memory descriptor and retrieves the result.
+    ///
+    /// # Arguments
+    ///
+    /// * `handle` - A reference to the `dnnl_memory_desc_t` handle.
+    ///
+    /// # Returns
+    ///
+    /// A `Result` containing the query output on success or a `DnnlError` on failure.
+    fn execute(handle: dnnl_memory_desc_t) -> Result<Self::Output, DnnlError>;
+}
+
+/// Query type for retrieving the number of dimensions.
+pub struct NDimsQuery;
+
+impl Query for NDimsQuery {
+    type Output = i32;
+    const QUERY: dnnl_query_t::Type = dnnl_query_t::dnnl_query_ndims_s32;
+
+    fn execute(handle: dnnl_memory_desc_t) -> Result<Self::Output, DnnlError> {
+        unsafe {
+            let mut result: i32 = 0;
+            let status =
+                dnnl_memory_desc_query(handle, Self::QUERY, &mut result as *mut i32 as *mut c_void);
+            if status != dnnl_status_t::dnnl_success {
+                return Err(status.into());
+            }
+            Ok(result)
+        }
+    }
+}
+
+/// Query type for retrieving the dimensions.
+use onednnl_sys::{
+    dnnl_format_tag_t::dnnl_format_tag_any, dnnl_query_t::dnnl_query_dims as QUERY_DIMS,
+};
+
+pub struct DimsQuery;
+
+impl Query for DimsQuery {
+    type Output = Vec<dnnl_dim_t>;
+    const QUERY: dnnl_query_t::Type = QUERY_DIMS;
+
+    fn execute(handle: dnnl_memory_desc_t) -> Result<Self::Output, DnnlError> {
+        let ndims = NDimsQuery::execute(handle)? as usize;
+
+        if ndims <= 0 || ndims > DNNL_MAX_NDIMS {
+            return Err(DnnlError::InvalidQueryOutput);
+        }
+
+        let layout = Layout::array::<dnnl_dim_t>(ndims).unwrap();
+        let mut ptr = unsafe { alloc(layout) as *mut dnnl_dim_t };
+
+        let ptr_to_ptr = &mut ptr as *mut *mut dnnl_dim_t;
+
+        let status =
+            unsafe { dnnl_memory_desc_query(handle, Self::QUERY, ptr_to_ptr as *mut c_void) };
+
+        if status == dnnl_status_t::dnnl_success {
+            let dims = unsafe { std::slice::from_raw_parts(ptr, ndims) };
+
+            Ok(dims.to_vec())
+        } else {
+            Err(status.into())
+        }
+    }
+}
+
+/// Query type for retrieving the data type.
+pub struct DataTypeQuery;
+
+impl Query for DataTypeQuery {
+    type Output = dnnl_data_type_t::Type;
+    const QUERY: dnnl_query_t::Type = dnnl_query_t::dnnl_query_data_type;
+
+    fn execute(handle: dnnl_memory_desc_t) -> Result<Self::Output, DnnlError> {
+        unsafe {
+            let mut dtype: dnnl_data_type_t::Type = 0;
+            let status = dnnl_memory_desc_query(
+                handle,
+                Self::QUERY,
+                &mut dtype as *mut dnnl_data_type_t::Type as *mut c_void,
+            );
+            if status != dnnl_status_t::dnnl_success {
+                return Err(status.into());
+            }
+            Ok(dtype)
+        }
+    }
 }
