@@ -8,15 +8,19 @@ use {
             Memory,
         },
         primitive::{
-            config::{binary::ForwardBinaryConfig, matmul::ForwardMatMulConfig},
+            config::{
+                binary::{Binary, ForwardBinaryConfig},
+                matmul::ForwardMatMulConfig,
+            },
             ExecArg, ForwardBinary, ForwardMatMul, Primitive, PropForwardInference,
         },
         stream::Stream,
     },
     onednnl_sys::{
-        dnnl_alg_kind_t, dnnl_data_type_t::dnnl_f32, DNNL_ARG_BIAS, DNNL_ARG_DST, DNNL_ARG_SRC_0,
-        DNNL_ARG_SRC_1, DNNL_ARG_WEIGHTS,
+        dnnl_data_type_t::dnnl_f32, DNNL_ARG_BIAS, DNNL_ARG_DST, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1,
+        DNNL_ARG_WEIGHTS,
     },
+    std::sync::Arc,
 };
 
 #[test]
@@ -28,7 +32,7 @@ pub fn test_smoke_binary_add() {
     let dst_desc = MemoryDescriptor::new::<1, x>([3], dnnl_f32).unwrap();
 
     let binary_config = ForwardBinaryConfig {
-        alg_kind: dnnl_alg_kind_t::dnnl_binary_add,
+        alg_kind: Binary::ADD,
         src0_desc: &src0_desc,
         src1_desc: &src1_desc,
         dst_desc: &dst_desc,
@@ -41,23 +45,25 @@ pub fn test_smoke_binary_add() {
     assert!(primitive.is_ok());
     let primitive = primitive.unwrap();
 
-    let s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap();
+    let mut s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap().into();
 
     // Allocate and initialize memory
-    let src0_memory = Memory::new_with_user_buffer(engine.clone(), src0_desc, &s0_buffer).unwrap();
+    let src0_memory =
+        Memory::new_with_user_buffer(engine.clone(), src0_desc, &mut s0_buffer).unwrap();
 
-    let s1_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0]).unwrap();
+    let mut s1_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0]).unwrap().into();
 
-    let src1_memory = Memory::new_with_user_buffer(engine.clone(), src1_desc, &s1_buffer).unwrap();
+    let src1_memory =
+        Memory::new_with_user_buffer(engine.clone(), src1_desc, &mut s1_buffer).unwrap();
 
-    let output = AlignedBuffer::<f32>::zeroed(3).unwrap();
+    let mut output = AlignedBuffer::<f32>::zeroed(3).unwrap().into();
 
-    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, &output).unwrap();
+    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, &mut output).unwrap();
 
     // Configure the binary operation
 
     // Execute the primitive
-    let stream = Stream::new(engine.clone()).unwrap();
+    let stream = Arc::new(Stream::new(engine.clone()).unwrap());
     let args = vec![
         ExecArg {
             index: DNNL_ARG_SRC_0 as i32,
@@ -79,7 +85,7 @@ pub fn test_smoke_binary_add() {
 
     assert_eq!(result, Ok(()));
 
-    assert_eq!(output.as_slice(), &[5.0, 7.0, 9.0]);
+    assert_eq!(output.to_vec::<f32>(), vec![5.0, 7.0, 9.0]);
 }
 
 #[test]
@@ -106,11 +112,15 @@ pub fn test_smoke_matmul() {
 
     // Step 3: Allocate Aligned Buffers
     // Initialize src and weights with sample data, dst with zeros
-    let src_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0])
-        .expect("Failed to allocate src buffer");
-    let weights_buffer = AlignedBuffer::new(&[7.0f32, 8.0, 9.0, 10.0, 11.0, 12.0])
-        .expect("Failed to allocate weights buffer");
-    let output_buffer = AlignedBuffer::<f32>::zeroed(4).expect("Failed to allocate output buffer");
+    let mut src_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0, 4.0, 5.0, 6.0])
+        .expect("Failed to allocate src buffer")
+        .into();
+    let mut weights_buffer = AlignedBuffer::new(&[7.0f32, 8.0, 9.0, 10.0, 11.0, 12.0])
+        .expect("Failed to allocate weights buffer")
+        .into();
+    let mut output_buffer = AlignedBuffer::<f32>::zeroed(4)
+        .expect("Failed to allocate output buffer")
+        .into();
 
     let zero_bias_desc = MemoryDescriptor::new::<3, abc>([1, 2, 2], DataType::F32).unwrap();
 
@@ -132,22 +142,22 @@ pub fn test_smoke_matmul() {
 
     // Step 6: Create Memory Objects
     // Wrap the buffers into oneDNN Memory objects
-    let src_memory = Memory::new_with_user_buffer(engine.clone(), src_desc, &src_buffer)
+    let src_memory = Memory::new_with_user_buffer(engine.clone(), src_desc, &mut src_buffer)
         .expect("Failed to create src memory");
     let weights_memory =
-        Memory::new_with_user_buffer(engine.clone(), weights_desc, &weights_buffer)
+        Memory::new_with_user_buffer(engine.clone(), weights_desc, &mut weights_buffer)
             .expect("Failed to create weights memory");
 
     // Since we are disabling bias, create a Memory object without a buffer
     let bias_memory = Memory::new_without_buffer(engine.clone(), zero_bias_desc)
         .expect("Failed to create bias memory (disabled)");
 
-    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, &output_buffer)
+    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, &mut output_buffer)
         .expect("Failed to create destination memory");
 
     // Step 7: Create a Stream
     // A stream is required to execute the primitive
-    let stream = Stream::new(engine.clone()).expect("Failed to create stream");
+    let stream = Arc::new(Stream::new(engine.clone()).expect("Failed to create stream"));
 
     // Step 8: Define Execution Arguments
     // Map each argument kind to its corresponding Memory object
@@ -191,8 +201,8 @@ pub fn test_smoke_matmul() {
 
     let expected = vec![58.0f32, 64.0, 139.0, 154.0];
     assert_eq!(
-        output_buffer.as_slice(),
-        expected.as_slice(),
+        output_buffer.to_vec::<f32>(),
+        expected,
         "MatMul output does not match expected results"
     );
 }

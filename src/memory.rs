@@ -1,6 +1,6 @@
 use {
     crate::{engine::Engine, error::DnnlError},
-    buffer::AlignedBuffer,
+    buffer::Buffer,
     descriptor::MemoryDescriptor,
     onednnl_sys::{
         dnnl_memory, dnnl_memory_create, dnnl_memory_destroy, dnnl_memory_t, dnnl_status_t,
@@ -19,9 +19,9 @@ pub mod descriptor;
 #[allow(non_camel_case_types)]
 pub mod format_tag;
 
-#[derive(Debug, PartialEq, Copy, Clone)]
+#[derive(Debug)]
 pub enum BufferType {
-    UserAllocated,
+    UserAllocated(Buffer),
     LibraryAllocated,
     None,
 }
@@ -74,14 +74,14 @@ impl Memory {
     ///
     ///     
     /// let mem_desc = MemoryDescriptor::new::<6, abcdef>(dims, dnnl_f32).unwrap();
-    /// let buffer = AlignedBuffer::<f32>::zeroed(dims.iter().copied().product::<i64>() as usize).unwrap();
-    /// let memory = Memory::new_with_user_buffer(Arc::clone(&engine), mem_desc, &buffer);
+    /// let mut buffer = AlignedBuffer::<f32>::zeroed(dims.iter().copied().sum::<i64>() as usize).unwrap().into();
+    /// let memory = Memory::new_with_user_buffer(Arc::clone(&engine), mem_desc, &mut buffer);
     /// assert!(memory.is_ok());
     /// ```
-    pub fn new_with_user_buffer<T>(
+    pub fn new_with_user_buffer(
         engine: Arc<Engine>,
         desc: MemoryDescriptor,
-        buffer: &AlignedBuffer<T>,
+        buffer: &mut Buffer,
     ) -> Result<Self, DnnlError> {
         let mut handle = std::ptr::null_mut::<dnnl_memory>();
         let status = unsafe {
@@ -89,7 +89,7 @@ impl Memory {
                 &mut handle,
                 desc.handle,
                 engine.handle,
-                buffer.ptr.as_ptr() as *mut c_void,
+                buffer.as_ptr() as *mut c_void,
             )
         };
 
@@ -97,7 +97,7 @@ impl Memory {
             Ok(Memory {
                 handle,
                 engine,
-                buffer_type: BufferType::UserAllocated,
+                buffer_type: BufferType::UserAllocated(buffer.clone()),
                 desc,
             })
         } else {

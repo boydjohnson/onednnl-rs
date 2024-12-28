@@ -36,7 +36,7 @@ impl MemoryDescriptor {
     ///
     /// ```
     pub fn new<const NDIMS: usize, T: FormatTag<NDIMS>>(
-        dims: [dnnl_dim_t; NDIMS],
+        dims: impl AsRef<[dnnl_dim_t]>,
         data_type: dnnl_data_type_t::Type,
     ) -> Result<Self, DnnlError> {
         let mut handle: dnnl_memory_desc_t = std::ptr::null_mut();
@@ -44,7 +44,7 @@ impl MemoryDescriptor {
             dnnl_memory_desc_create_with_tag(
                 &mut handle,
                 NDIMS as i32,
-                dims.as_ptr(),
+                dims.as_ref().as_ptr(),
                 data_type,
                 T::TAG,
             )
