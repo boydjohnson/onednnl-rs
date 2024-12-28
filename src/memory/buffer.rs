@@ -3,9 +3,11 @@ use {
     std::{
         alloc::{alloc, alloc_zeroed, dealloc, Layout},
         ptr::NonNull,
+        sync::{Arc, RwLock},
     },
 };
 
+#[derive(Debug)]
 pub struct AlignedBuffer<T> {
     pub(crate) ptr: NonNull<T>,
     pub size: usize,
@@ -61,6 +63,38 @@ impl<T> Drop for AlignedBuffer<T> {
     fn drop(&mut self) {
         unsafe {
             dealloc(self.ptr.as_ptr() as *mut u8, self.layout);
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
+pub enum Buffer {
+    FloatBuffer(Arc<RwLock<AlignedBuffer<f32>>>),
+}
+
+impl From<AlignedBuffer<f32>> for Buffer {
+    fn from(value: AlignedBuffer<f32>) -> Self {
+        Self::FloatBuffer(Arc::new(RwLock::new(value)))
+    }
+}
+
+impl Buffer {
+    pub(crate) fn as_ptr<T>(&mut self) -> *mut T {
+        match self {
+            Self::FloatBuffer(buffer) => buffer.write().unwrap().ptr.as_ptr() as *mut T,
+        }
+    }
+
+    pub fn to_vec<T>(&self) -> Vec<T>
+    where
+        T: From<f32>,
+    {
+        match self {
+            Self::FloatBuffer(buffer) => {
+                let guard = buffer.read().unwrap();
+
+                guard.as_slice().iter().copied().map(|t| t.into()).collect()
+            }
         }
     }
 }

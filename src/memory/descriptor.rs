@@ -1,4 +1,8 @@
 use {
+    super::format_tag::{
+        a, ab, abc, abcd, abcde, abcdef, abcdefg, abcdefgh, abcdefghi, abcdefghij, abcdefghijk,
+        abcdefghijkl,
+    },
     onednnl_sys::{
         dnnl_data_type_t, dnnl_dim_t, dnnl_memory_desc_clone, dnnl_memory_desc_create_with_blob,
         dnnl_memory_desc_create_with_tag, dnnl_memory_desc_destroy, dnnl_memory_desc_equal,
@@ -10,6 +14,24 @@ use {
         ffi::c_void,
     },
 };
+
+pub fn new_plain_descriptor(ndims: i32, dims: Vec<i64>, data_type: u32) -> MemoryDescriptor {
+    match ndims {
+        1 => MemoryDescriptor::new::<1, a>(dims, data_type).unwrap(),
+        2 => MemoryDescriptor::new::<2, ab>(dims, data_type).unwrap(),
+        3 => MemoryDescriptor::new::<3, abc>(dims, data_type).unwrap(),
+        4 => MemoryDescriptor::new::<4, abcd>(dims, data_type).unwrap(),
+        5 => MemoryDescriptor::new::<5, abcde>(dims, data_type).unwrap(),
+        6 => MemoryDescriptor::new::<6, abcdef>(dims, data_type).unwrap(),
+        7 => MemoryDescriptor::new::<7, abcdefg>(dims, data_type).unwrap(),
+        8 => MemoryDescriptor::new::<8, abcdefgh>(dims, data_type).unwrap(),
+        9 => MemoryDescriptor::new::<9, abcdefghi>(dims, data_type).unwrap(),
+        10 => MemoryDescriptor::new::<10, abcdefghij>(dims, data_type).unwrap(),
+        11 => MemoryDescriptor::new::<11, abcdefghijk>(dims, data_type).unwrap(),
+        12 => MemoryDescriptor::new::<12, abcdefghijkl>(dims, data_type).unwrap(),
+        _ => panic!("Unsupported number of dimensions: {}", ndims),
+    }
+}
 
 #[derive(Debug)]
 pub struct MemoryDescriptor {
@@ -36,7 +58,7 @@ impl MemoryDescriptor {
     ///
     /// ```
     pub fn new<const NDIMS: usize, T: FormatTag<NDIMS>>(
-        dims: [dnnl_dim_t; NDIMS],
+        dims: impl AsRef<[dnnl_dim_t]>,
         data_type: dnnl_data_type_t::Type,
     ) -> Result<Self, DnnlError> {
         let mut handle: dnnl_memory_desc_t = std::ptr::null_mut();
@@ -44,7 +66,7 @@ impl MemoryDescriptor {
             dnnl_memory_desc_create_with_tag(
                 &mut handle,
                 NDIMS as i32,
-                dims.as_ptr(),
+                dims.as_ref().as_ptr(),
                 data_type,
                 T::TAG,
             )

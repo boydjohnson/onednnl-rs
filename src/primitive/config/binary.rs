@@ -2,7 +2,9 @@ use {
     super::PrimitiveConfig,
     crate::{
         memory::descriptor::MemoryDescriptor,
-        primitive::{descriptor::PrimitiveDescriptor, Forward, PropForwardInference},
+        primitive::{
+            descriptor::PrimitiveDescriptor, Forward, PropForwardInference,
+        },
     },
     onednnl_sys::{
         dnnl_alg_kind_t, dnnl_binary_primitive_desc_create, dnnl_primitive_attr_t, dnnl_status_t,
