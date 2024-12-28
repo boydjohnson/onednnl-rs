@@ -84,3 +84,6 @@ impl Drop for Stream {
         unsafe { dnnl_stream_destroy(self.handle) };
     }
 }
+
+unsafe impl Sync for Stream {}
+unsafe impl Send for Stream {}
