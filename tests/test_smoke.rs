@@ -3,6 +3,7 @@ use {
         engine::Engine,
         memory::{
             buffer::AlignedBuffer,
+            data_type_size,
             descriptor::{DataType, DataTypeQuery, DimsQuery, MemoryDescriptor, NDimsQuery},
             format_tag::{abc, abcd, x},
             Memory,
@@ -56,7 +57,9 @@ pub fn test_smoke_binary_add() {
     let src1_memory =
         Memory::new_with_user_buffer(engine.clone(), src1_desc, &mut s1_buffer).unwrap();
 
-    let mut output = AlignedBuffer::<f32>::zeroed(3).unwrap().into();
+    let mut output = AlignedBuffer::<f32>::zeroed(dst_desc.get_size() / data_type_size(dnnl_f32))
+        .unwrap()
+        .into();
 
     let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, &mut output).unwrap();
 
@@ -118,9 +121,10 @@ pub fn test_smoke_matmul() {
     let mut weights_buffer = AlignedBuffer::new(&[7.0f32, 8.0, 9.0, 10.0, 11.0, 12.0])
         .expect("Failed to allocate weights buffer")
         .into();
-    let mut output_buffer = AlignedBuffer::<f32>::zeroed(4)
-        .expect("Failed to allocate output buffer")
-        .into();
+    let mut output_buffer =
+        AlignedBuffer::<f32>::zeroed(dst_desc.get_size() / data_type_size(dnnl_f32))
+            .expect("Failed to allocate output buffer")
+            .into();
 
     let zero_bias_desc = MemoryDescriptor::new::<3, abc>([1, 2, 2], DataType::F32).unwrap();
 
