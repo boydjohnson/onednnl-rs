@@ -16,6 +16,7 @@ use {
             config::binary::{Binary, ForwardBinaryConfig},
             ExecArg, ForwardBinary, Primitive, PropForwardInference,
         },
+        set_primitive_cache_capacity,
         stream::Stream,
     },
     onednnl_sys::{dnnl_data_type_t::dnnl_f32, DNNL_ARG_DST, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1},
@@ -26,6 +27,8 @@ use {
 #[bench]
 fn binary_add(b: &mut Bencher) {
     let engine = Engine::new(Engine::CPU, 0).unwrap();
+
+    set_primitive_cache_capacity(2).unwrap();
 
     let stream = Arc::new(Stream::new(engine.clone()).unwrap());
 
@@ -46,22 +49,20 @@ fn binary_add(b: &mut Bencher) {
     assert!(primitive.is_ok());
     let primitive = primitive.unwrap();
 
-    let mut s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap().into();
+    let s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap().into();
 
     // Allocate and initialize memory
-    let src0_memory =
-        Memory::new_with_user_buffer(engine.clone(), src0_desc, &mut s0_buffer).unwrap();
+    let src0_memory = Memory::new_with_user_buffer(engine.clone(), src0_desc, s0_buffer).unwrap();
 
-    let mut s1_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0]).unwrap().into();
+    let s1_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0]).unwrap().into();
 
-    let src1_memory =
-        Memory::new_with_user_buffer(engine.clone(), src1_desc, &mut s1_buffer).unwrap();
+    let src1_memory = Memory::new_with_user_buffer(engine.clone(), src1_desc, s1_buffer).unwrap();
 
-    let mut output = AlignedBuffer::<f32>::zeroed(dst_desc.get_size() / data_type_size(dnnl_f32))
+    let output = AlignedBuffer::<f32>::zeroed(dst_desc.get_size() / data_type_size(dnnl_f32))
         .unwrap()
         .into();
 
-    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, &mut output).unwrap();
+    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, output).unwrap();
 
     b.iter(|| {
         // Create the primitive
@@ -90,6 +91,6 @@ fn binary_add(b: &mut Bencher) {
 
         assert_eq!(result, Ok(()));
 
-        assert_eq!(output.to_vec::<f32>(), vec![5.0, 7.0, 9.0]);
+        assert_eq!(dst_memory.to_vec(), Ok(vec![5.0, 7.0, 9.0]));
     });
 }
