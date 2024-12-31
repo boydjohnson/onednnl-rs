@@ -3,10 +3,15 @@ use {
     buffer::Buffer,
     descriptor::MemoryDescriptor,
     onednnl_sys::{
-        dnnl_memory, dnnl_memory_create, dnnl_memory_destroy, dnnl_memory_t, dnnl_status_t,
+        dnnl_data_type_size, dnnl_data_type_t, dnnl_memory, dnnl_memory_create,
+        dnnl_memory_destroy, dnnl_memory_t, dnnl_status_t,
     },
     std::{ffi::c_void, sync::Arc},
 };
+
+pub fn data_type_size(ty: dnnl_data_type_t::Type) -> usize {
+    unsafe { dnnl_data_type_size(ty) }
+}
 
 /// Memory without an underlying buffer
 const DNNL_MEMORY_NONE: *mut c_void = std::ptr::null_mut();
@@ -66,6 +71,7 @@ impl Memory {
     /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
     /// use onednnl::memory::format_tag::abcdef;
     /// use onednnl::memory::buffer::AlignedBuffer;
+    /// use onednnl::memory::data_type_size;
     ///
     /// let engine = Arc::new(Engine::new(Engine::CPU, 0).unwrap());
     ///
@@ -74,7 +80,7 @@ impl Memory {
     ///
     ///     
     /// let mem_desc = MemoryDescriptor::new::<6, abcdef>(dims, dnnl_f32).unwrap();
-    /// let mut buffer = AlignedBuffer::<f32>::zeroed(dims.iter().copied().sum::<i64>() as usize).unwrap().into();
+    /// let mut buffer = AlignedBuffer::<f32>::zeroed(mem_desc.get_size() / data_type_size(dnnl_f32)).unwrap().into();
     /// let memory = Memory::new_with_user_buffer(Arc::clone(&engine), mem_desc, &mut buffer);
     /// assert!(memory.is_ok());
     /// ```

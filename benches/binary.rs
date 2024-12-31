@@ -7,19 +7,18 @@ use {
         engine::Engine,
         memory::{
             buffer::AlignedBuffer,
+            data_type_size,
             descriptor::{DataType, MemoryDescriptor},
             format_tag::x,
             Memory,
         },
         primitive::{
-            config::{
-                binary::{Binary, ForwardBinaryConfig},
-            },
+            config::binary::{Binary, ForwardBinaryConfig},
             ExecArg, ForwardBinary, Primitive, PropForwardInference,
         },
         stream::Stream,
     },
-    onednnl_sys::{DNNL_ARG_DST, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1},
+    onednnl_sys::{dnnl_data_type_t::dnnl_f32, DNNL_ARG_DST, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1},
     std::sync::Arc,
     test::Bencher,
 };
@@ -58,7 +57,9 @@ fn binary_add(b: &mut Bencher) {
     let src1_memory =
         Memory::new_with_user_buffer(engine.clone(), src1_desc, &mut s1_buffer).unwrap();
 
-    let mut output = AlignedBuffer::<f32>::zeroed(3).unwrap().into();
+    let mut output = AlignedBuffer::<f32>::zeroed(dst_desc.get_size() / data_type_size(dnnl_f32))
+        .unwrap()
+        .into();
 
     let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, &mut output).unwrap();
 
