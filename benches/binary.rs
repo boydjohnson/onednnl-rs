@@ -16,6 +16,7 @@ use {
             config::binary::{Binary, ForwardBinaryConfig},
             ExecArg, ForwardBinary, Primitive, PropForwardInference,
         },
+        set_primitive_cache_capacity,
         stream::Stream,
     },
     onednnl_sys::{dnnl_data_type_t::dnnl_f32, DNNL_ARG_DST, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1},
@@ -26,6 +27,8 @@ use {
 #[bench]
 fn binary_add(b: &mut Bencher) {
     let engine = Engine::new(Engine::CPU, 0).unwrap();
+
+    set_primitive_cache_capacity(2).unwrap();
 
     let stream = Arc::new(Stream::new(engine.clone()).unwrap());
 
