@@ -51,7 +51,7 @@ impl Engine {
     ///
     /// assert_eq!(engine.get_kind(), Ok(Engine::CPU));
     /// ```
-    pub fn get_kind(self: Arc<Self>) -> Result<dnnl_engine_kind_t::Type, DnnlError> {
+    pub fn get_kind(self: &Arc<Self>) -> Result<dnnl_engine_kind_t::Type, DnnlError> {
         let mut kind: dnnl_engine_kind_t::Type = 0; // Initialize a variable to store the kind
         let status = unsafe { dnnl_engine_get_kind(self.handle, &mut kind) }; // Pass a mutable reference
 

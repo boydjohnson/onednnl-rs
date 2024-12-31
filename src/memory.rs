@@ -1,14 +1,17 @@
+#![allow(non_snake_case)]
 use {
     crate::{engine::Engine, error::DnnlError},
     buffer::Buffer,
     descriptor::MemoryDescriptor,
     onednnl_sys::{
-        dnnl_data_type_size, dnnl_data_type_t, dnnl_memory, dnnl_memory_create,
-        dnnl_memory_destroy, dnnl_memory_t, dnnl_status_t,
+        dnnl_data_type_size, dnnl_data_type_t, dnnl_engine_kind_t, dnnl_memory, dnnl_memory_create,
+        dnnl_memory_destroy, dnnl_memory_t, dnnl_status_t, DNNL_GPU_RUNTIME, DNNL_RUNTIME_OCL,
+        DNNL_RUNTIME_SYCL,
     },
     std::{ffi::c_void, sync::Arc},
 };
 
+/// Get the size for a data type.
 pub fn data_type_size(ty: dnnl_data_type_t::Type) -> usize {
     unsafe { dnnl_data_type_size(ty) }
 }
@@ -90,13 +93,32 @@ impl Memory {
         buffer: &mut Buffer,
     ) -> Result<Self, DnnlError> {
         let mut handle = std::ptr::null_mut::<dnnl_memory>();
-        let status = unsafe {
-            dnnl_memory_create(
-                &mut handle,
-                desc.handle,
-                engine.handle,
-                buffer.as_ptr() as *mut c_void,
-            )
+
+        let status = match engine.get_kind() {
+            Ok(dnnl_engine_kind_t::dnnl_cpu) => unsafe {
+                dnnl_memory_create(
+                    &mut handle,
+                    desc.handle,
+                    engine.handle,
+                    buffer.as_ptr() as *mut c_void,
+                )
+            },
+            Ok(dnnl_engine_kind_t::dnnl_gpu) => {
+                if DNNL_GPU_RUNTIME == DNNL_RUNTIME_SYCL {
+                    todo!("Add SYCL interop")
+                } else if DNNL_GPU_RUNTIME == DNNL_RUNTIME_OCL {
+                    todo!("Add OCL interop")
+                } else {
+                    todo!("Return Error for lack of a GPU Runtime")
+                }
+            }
+            Ok(dnnl_engine_kind_t::dnnl_any_engine) => {
+                todo!("Add DNNL ANY interop")
+            }
+            Ok(_) => {
+                panic!("Unexpected engine kind type type")
+            }
+            Err(e) => return Err(e),
         };
 
         if status == dnnl_status_t::dnnl_success {
