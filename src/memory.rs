@@ -1,12 +1,14 @@
 #![allow(non_snake_case)]
 use {
     crate::{engine::Engine, error::DnnlError},
-    buffer::Buffer,
+    buffer::AlignedBuffer,
     descriptor::MemoryDescriptor,
     onednnl_sys::{
-        dnnl_data_type_size, dnnl_data_type_t, dnnl_engine_kind_t, dnnl_memory, dnnl_memory_create,
-        dnnl_memory_destroy, dnnl_memory_t, dnnl_status_t, DNNL_GPU_RUNTIME, DNNL_RUNTIME_OCL,
-        DNNL_RUNTIME_SYCL,
+        dnnl_data_type_size,
+        dnnl_data_type_t::{self, dnnl_f32},
+        dnnl_engine_kind_t, dnnl_memory, dnnl_memory_create, dnnl_memory_destroy,
+        dnnl_memory_get_data_handle, dnnl_memory_t, dnnl_status_t, DNNL_GPU_RUNTIME,
+        DNNL_RUNTIME_OCL, DNNL_RUNTIME_SYCL,
     },
     std::{ffi::c_void, sync::Arc},
 };
@@ -28,21 +30,21 @@ pub mod descriptor;
 pub mod format_tag;
 
 #[derive(Debug)]
-pub enum BufferType {
-    UserAllocated(Buffer),
+pub enum BufferType<T> {
+    UserAllocated(AlignedBuffer<T>),
     LibraryAllocated,
     None,
 }
 
 #[derive(Debug)]
-pub struct Memory {
+pub struct Memory<T> {
     pub(crate) handle: dnnl_memory_t,
     pub engine: Arc<Engine>,
-    pub buffer_type: BufferType,
+    pub buffer_type: BufferType<T>,
     pub desc: MemoryDescriptor,
 }
 
-impl Memory {
+impl<T> Memory<T> {
     /// Creates a new memory object with a user-allocated buffer.
     ///
     /// This function initializes a `Memory` instance using a buffer provided by the user.
@@ -83,14 +85,14 @@ impl Memory {
     ///
     ///     
     /// let mem_desc = MemoryDescriptor::new::<6, abcdef>(dims, dnnl_f32).unwrap();
-    /// let mut buffer = AlignedBuffer::<f32>::zeroed(mem_desc.get_size() / data_type_size(dnnl_f32)).unwrap().into();
-    /// let memory = Memory::new_with_user_buffer(Arc::clone(&engine), mem_desc, &mut buffer);
+    /// let mut buffer = AlignedBuffer::<f32>::zeroed(mem_desc.get_size() / data_type_size(dnnl_f32)).unwrap();
+    /// let memory = Memory::new_with_user_buffer(Arc::clone(&engine), mem_desc, buffer);
     /// assert!(memory.is_ok());
     /// ```
     pub fn new_with_user_buffer(
         engine: Arc<Engine>,
         desc: MemoryDescriptor,
-        buffer: &mut Buffer,
+        buffer: AlignedBuffer<T>,
     ) -> Result<Self, DnnlError> {
         let mut handle = std::ptr::null_mut::<dnnl_memory>();
 
@@ -100,7 +102,7 @@ impl Memory {
                     &mut handle,
                     desc.handle,
                     engine.handle,
-                    buffer.as_ptr() as *mut c_void,
+                    buffer.ptr.as_ptr() as *mut c_void,
                 )
             },
             Ok(dnnl_engine_kind_t::dnnl_gpu) => {
@@ -125,7 +127,7 @@ impl Memory {
             Ok(Memory {
                 handle,
                 engine,
-                buffer_type: BufferType::UserAllocated(buffer.clone()),
+                buffer_type: BufferType::UserAllocated(buffer),
                 desc,
             })
         } else {
@@ -152,7 +154,7 @@ impl Memory {
     /// let mem_desc = MemoryDescriptor::new::<4, abcd>(dims, dnnl_f32).unwrap();
     ///
     ///     
-    /// let memory = Memory::new_with_library_buffer(Arc::clone(&engine), mem_desc);
+    /// let memory = Memory::<f32>::new_with_library_buffer(Arc::clone(&engine), mem_desc);
     /// assert!(memory.is_ok());
     /// ```
     pub fn new_with_library_buffer(
@@ -200,7 +202,7 @@ impl Memory {
     /// let mem_desc = MemoryDescriptor::new::<6, abcdef>(dims, dnnl_f32).unwrap();
     ///
     ///     
-    /// let memory = Memory::new_without_buffer(Arc::clone(&engine), mem_desc);
+    /// let memory = Memory::<f32>::new_without_buffer(Arc::clone(&engine), mem_desc);
     /// assert!(memory.is_ok());
     /// ```
     pub fn new_without_buffer(
@@ -223,13 +225,54 @@ impl Memory {
             Err(status.into())
         }
     }
+
+    pub fn to_vec(&self) -> Result<Vec<T>, DnnlError>
+    where
+        T: Clone,
+    {
+        match self.engine.get_kind() {
+            Ok(dnnl_engine_kind_t::dnnl_cpu) => match &self.buffer_type {
+                BufferType::UserAllocated(buffer) => Ok(buffer.as_slice().to_vec()),
+                BufferType::LibraryAllocated => {
+                    let buffer = AlignedBuffer::<T>::zeroed(
+                        self.desc.get_size() / unsafe { dnnl_data_type_size(dnnl_f32) },
+                    )
+                    .unwrap();
+
+                    let status = unsafe {
+                        dnnl_memory_get_data_handle(
+                            self.handle,
+                            buffer.ptr.as_ptr() as *mut *mut c_void,
+                        )
+                    };
+
+                    if status == dnnl_status_t::dnnl_success {
+                        Ok(buffer.as_slice().to_vec())
+                    } else {
+                        Err(status.into())
+                    }
+                }
+                BufferType::None => todo!("return error"),
+            },
+            Ok(dnnl_engine_kind_t::dnnl_gpu) => {
+                todo!("Return the right data")
+            }
+            Ok(dnnl_engine_kind_t::dnnl_any_engine) => {
+                todo!("Return the right data")
+            }
+            Ok(t) => {
+                panic!("Received incorrect engine_kind_t: {}", t)
+            }
+            Err(e) => Err(e),
+        }
+    }
 }
 
-impl Drop for Memory {
+impl<T> Drop for Memory<T> {
     fn drop(&mut self) {
         unsafe { dnnl_memory_destroy(self.handle) };
     }
 }
 
-unsafe impl Sync for Memory {}
-unsafe impl Send for Memory {}
+unsafe impl<T> Sync for Memory<T> {}
+unsafe impl<T> Send for Memory<T> {}

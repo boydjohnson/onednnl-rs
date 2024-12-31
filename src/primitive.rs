@@ -231,7 +231,7 @@ impl Primitive {
         }
     }
 
-    pub fn execute(&self, stream: &Stream, args: Vec<ExecArg<'_>>) -> Result<(), DnnlError> {
+    pub fn execute<T>(&self, stream: &Stream, args: Vec<ExecArg<'_, T>>) -> Result<(), DnnlError> {
         let c_args: Vec<dnnl_exec_arg_t> = args
             .iter()
             .map(|arg| dnnl_exec_arg_t {
@@ -265,7 +265,7 @@ impl Drop for Primitive {
     }
 }
 
-pub struct ExecArg<'a> {
+pub struct ExecArg<'a, T> {
     pub index: i32,
-    pub mem: &'a Memory,
+    pub mem: &'a Memory<T>,
 }
