@@ -46,3 +46,43 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardEltwis
         }
     }
 }
+
+pub struct Unary;
+
+impl Unary {
+    pub const TANH: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_tanh;
+    pub const TANH_USE_DST_FOR_BWD: dnnl_alg_kind_t::Type =
+        dnnl_alg_kind_t::dnnl_eltwise_tanh_use_dst_for_bwd;
+    pub const ABS: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_abs;
+    pub const CLIP: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_clip;
+    pub const CLIP_V2: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_clip_v2;
+    pub const CLIP_V2_USE_DST_FOR_BWD: dnnl_alg_kind_t::Type =
+        dnnl_alg_kind_t::dnnl_eltwise_clip_v2_use_dst_for_bwd;
+    pub const ELU: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_elu;
+    pub const ELU_USE_DST_FOR_BWD: dnnl_alg_kind_t::Type =
+        dnnl_alg_kind_t::dnnl_eltwise_elu_use_dst_for_bwd;
+    pub const EXP: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_exp;
+    pub const EXP_USE_DST_FOR_BWD: dnnl_alg_kind_t::Type =
+        dnnl_alg_kind_t::dnnl_eltwise_exp_use_dst_for_bwd;
+    pub const GELU_ERF: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_gelu_erf;
+    pub const GELU_TANH: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_gelu_tanh;
+    pub const HARDSIGMOID: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_hardsigmoid;
+    pub const HARDSWISH: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_hardswish;
+    pub const LINEAR: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_linear;
+    pub const LOG: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_log;
+    pub const LOGISTIC: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_logistic;
+    pub const LOGISTIC_USE_DST_FOR_BWD: dnnl_alg_kind_t::Type =
+        dnnl_alg_kind_t::dnnl_eltwise_logistic_use_dst_for_bwd;
+    pub const MISH: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_mish;
+    pub const POW: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_pow;
+    pub const RELU: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_relu;
+    pub const RELU_USE_DST_FOR_BWD: dnnl_alg_kind_t::Type =
+        dnnl_alg_kind_t::dnnl_eltwise_relu_use_dst_for_bwd;
+    pub const ROUND: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_round;
+    pub const SOFT_RELU: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_soft_relu;
+    pub const SQRT: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_sqrt;
+    pub const SQRT_USE_DST_FOR_BWD: dnnl_alg_kind_t::Type =
+        dnnl_alg_kind_t::dnnl_eltwise_sqrt_use_dst_for_bwd;
+    pub const SQUARE: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_square;
+    pub const SWISH: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_swish;
+}
