@@ -12,14 +12,16 @@ use {
             config::{
                 binary::{Binary, ForwardBinaryConfig},
                 matmul::ForwardMatMulConfig,
+                reduction::{ForwardReductionConfig, Reduction},
             },
-            ExecArg, ForwardBinary, ForwardMatMul, Primitive, PropForwardInference,
+            ExecArg, ForwardBinary, ForwardMatMul, ForwardReduction, Primitive,
+            PropForwardInference,
         },
         stream::Stream,
     },
     onednnl_sys::{
-        dnnl_data_type_t::dnnl_f32, DNNL_ARG_BIAS, DNNL_ARG_DST, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1,
-        DNNL_ARG_WEIGHTS,
+        dnnl_data_type_t::dnnl_f32, DNNL_ARG_BIAS, DNNL_ARG_DST, DNNL_ARG_SRC, DNNL_ARG_SRC_0,
+        DNNL_ARG_SRC_1, DNNL_ARG_WEIGHTS,
     },
     std::sync::Arc,
 };
@@ -224,4 +226,61 @@ pub fn test_smoke_memory_desc() {
     assert_eq!(ndims, 4);
     assert_eq!(data_type, dnnl_f32);
     assert_eq!(dims, vec![1, 3, 228, 228]);
+}
+
+#[test]
+pub fn test_reduction_smoke() {
+    let engine = Engine::new(Engine::CPU, 0).unwrap();
+
+    let src_desc = MemoryDescriptor::new::<1, x>([3], dnnl_f32).unwrap();
+    let dst_desc = MemoryDescriptor::new::<1, x>([1], dnnl_f32).unwrap();
+
+    let reduction_config = ForwardReductionConfig {
+        alg_kind: Reduction::SUM,
+        src_desc: &src_desc,
+        dst_desc: &dst_desc,
+        p: 0.0,
+        eps: 0.0,
+        attr: std::ptr::null_mut(),
+    };
+
+    // Create the primitive
+    let primitive = Primitive::new::<_, PropForwardInference, ForwardReduction>(
+        reduction_config,
+        engine.clone(),
+    );
+    assert!(primitive.is_ok());
+    let primitive = primitive.unwrap();
+
+    let src_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0]).unwrap().into();
+
+    // Allocate and initialize memory
+    let src_memory = Memory::new_with_user_buffer(engine.clone(), src_desc, src_buffer).unwrap();
+
+    let output = AlignedBuffer::<f32>::zeroed(dst_desc.get_size() / data_type_size(dnnl_f32))
+        .unwrap()
+        .into();
+
+    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, output).unwrap();
+
+    // Execute the primitive
+    let stream = Arc::new(Stream::new(engine.clone()).unwrap());
+    let args = vec![
+        ExecArg {
+            index: DNNL_ARG_SRC as i32,
+            mem: &src_memory,
+        },
+        ExecArg {
+            index: DNNL_ARG_DST as i32,
+            mem: &dst_memory,
+        },
+    ];
+
+    let result = primitive.execute(&stream, args);
+
+    assert!(stream.wait().is_ok());
+
+    assert_eq!(result, Ok(()));
+
+    assert_eq!(dst_memory.to_vec(), Ok(vec![6.0]));
 }
