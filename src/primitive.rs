@@ -6,6 +6,7 @@ use {
         binary::ForwardBinaryConfig,
         eltwise::ForwardEltwiseConfig,
         matmul::ForwardMatMulConfig,
+        reduction::ForwardReductionConfig,
         PrimitiveConfig,
     },
     descriptor::PrimitiveDescriptor,
@@ -58,6 +59,7 @@ pub enum OperationType {
     Lstm,
     MatMul,
     PRelu,
+    Reduction,
     Shuffle,
     Softmax,
     VanillaRnn,
@@ -159,6 +161,16 @@ impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardMatMul<P> {
     const TYPE: OperationType = OperationType::MatMul;
 
     type OperationConfig = ForwardMatMulConfig<'a>;
+}
+
+pub struct ForwardReduction {
+    pub prop_type: PropForwardInference,
+}
+
+impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardReduction {
+    const TYPE: OperationType = OperationType::Reduction;
+
+    type OperationConfig = ForwardReductionConfig<'a>;
 }
 
 pub struct Primitive {
