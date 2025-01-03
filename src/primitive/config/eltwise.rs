@@ -2,10 +2,11 @@ use {
     super::PrimitiveConfig,
     crate::{
         memory::descriptor::MemoryDescriptor,
-        primitive::{descriptor::PrimitiveDescriptor, Forward, PropType},
+        primitive::{descriptor::PrimitiveDescriptor, Backward, Forward, PropType},
     },
     onednnl_sys::{
-        dnnl_alg_kind_t, dnnl_eltwise_forward_primitive_desc_create, dnnl_primitive_attr_t,
+        dnnl_alg_kind_t, dnnl_eltwise_backward_primitive_desc_create,
+        dnnl_eltwise_forward_primitive_desc_create, dnnl_primitive_attr_t, dnnl_primitive_desc_t,
         dnnl_status_t,
     },
 };
@@ -85,4 +86,44 @@ impl Unary {
         dnnl_alg_kind_t::dnnl_eltwise_sqrt_use_dst_for_bwd;
     pub const SQUARE: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_square;
     pub const SWISH: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_eltwise_swish;
+}
+
+pub struct BackwardEltwiseConfig<'a> {
+    pub alg_kind: dnnl_alg_kind_t::Type,
+    pub diff_src_desc: &'a MemoryDescriptor,
+    pub diff_dest_desc: &'a MemoryDescriptor,
+    pub data_desc: &'a MemoryDescriptor,
+    pub alpha: f32,
+    pub beta: f32,
+    pub forward_hint_desc: dnnl_primitive_desc_t,
+    pub attr: dnnl_primitive_attr_t,
+}
+
+impl<'a, P: PropType<Backward>> PrimitiveConfig<'a, Backward, P> for BackwardEltwiseConfig<'a> {
+    fn create_primitive_desc(
+        &self,
+        engine: std::sync::Arc<crate::engine::Engine>,
+    ) -> Result<crate::primitive::descriptor::PrimitiveDescriptor, crate::error::DnnlError> {
+        let mut handle = std::ptr::null_mut();
+        let status = unsafe {
+            dnnl_eltwise_backward_primitive_desc_create(
+                &mut handle,
+                engine.handle,
+                self.alg_kind,
+                self.diff_src_desc.handle,
+                self.diff_dest_desc.handle,
+                self.data_desc.handle,
+                self.alpha,
+                self.beta,
+                self.forward_hint_desc,
+                self.attr,
+            )
+        };
+
+        if status == dnnl_status_t::dnnl_success {
+            Ok(PrimitiveDescriptor { handle })
+        } else {
+            Err(status.into())
+        }
+    }
 }

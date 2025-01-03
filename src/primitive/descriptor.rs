@@ -6,7 +6,7 @@ use {
 };
 
 pub struct PrimitiveDescriptor {
-    pub(crate) handle: dnnl_primitive_desc_t,
+    pub handle: dnnl_primitive_desc_t,
 }
 
 impl PrimitiveDescriptor {
