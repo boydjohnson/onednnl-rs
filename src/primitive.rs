@@ -4,7 +4,7 @@ use {
         au_gru::{BackwardAuGruConfig, ForwardAuGruConfig},
         batch_norm::ForwardBatchNormConfig,
         binary::ForwardBinaryConfig,
-        eltwise::ForwardEltwiseConfig,
+        eltwise::{BackwardEltwiseConfig, ForwardEltwiseConfig},
         matmul::ForwardMatMulConfig,
         reduction::ForwardReductionConfig,
         PrimitiveConfig,
@@ -98,7 +98,7 @@ impl PropType<Forward> for PropForwardInference {
 }
 
 impl PropType<Forward> for PropForwardTraining {
-    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_forward_inference;
+    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_forward_training;
 }
 
 impl PropType<Backward> for PropBackward {
@@ -173,8 +173,17 @@ impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardReduction {
     type OperationConfig = ForwardReductionConfig<'a>;
 }
 
+pub struct BackwardEltwise<T: PropType<Backward>> {
+    pub prop_type: T,
+}
+
+impl<'a, P: PropType<Backward>> Operation<'a, Backward, P> for BackwardEltwise<P> {
+    const TYPE: OperationType = OperationType::Eltwise;
+    type OperationConfig = BackwardEltwiseConfig<'a>;
+}
+
 pub struct Primitive {
-    pub(crate) handle: dnnl_primitive_t,
+    pub handle: dnnl_primitive_t,
     pub desc: PrimitiveDescriptor,
     pub engine: Arc<Engine>,
 }
