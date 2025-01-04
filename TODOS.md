@@ -34,5 +34,4 @@
 ## Known Issues
 
 - Missing support for GPU (SYCL and OpenCL)
-- Missing Primitive attrs
 - Missing postops

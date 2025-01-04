@@ -2,11 +2,12 @@ use {
     super::PrimitiveConfig,
     crate::{
         memory::descriptor::MemoryDescriptor,
-        primitive::{descriptor::PrimitiveDescriptor, Forward, PropForwardInference},
+        primitive::{
+            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward,
+            PropForwardInference,
+        },
     },
-    onednnl_sys::{
-        dnnl_alg_kind_t, dnnl_primitive_attr_t, dnnl_reduction_primitive_desc_create, dnnl_status_t,
-    },
+    onednnl_sys::{dnnl_alg_kind_t, dnnl_reduction_primitive_desc_create, dnnl_status_t},
 };
 
 pub struct ForwardReductionConfig<'a> {
@@ -15,7 +16,7 @@ pub struct ForwardReductionConfig<'a> {
     pub dst_desc: &'a MemoryDescriptor,
     pub p: f32,
     pub eps: f32,
-    pub attr: dnnl_primitive_attr_t,
+    pub attr: &'a PrimitiveAttributes,
 }
 
 impl<'a> PrimitiveConfig<'a, Forward, PropForwardInference> for ForwardReductionConfig<'a> {
@@ -33,7 +34,7 @@ impl<'a> PrimitiveConfig<'a, Forward, PropForwardInference> for ForwardReduction
                 self.dst_desc.handle,
                 self.p,
                 self.eps,
-                self.attr,
+                self.attr.handle,
             )
         };
 

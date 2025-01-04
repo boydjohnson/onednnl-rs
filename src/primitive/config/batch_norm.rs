@@ -1,13 +1,12 @@
 use std::ffi::c_uint;
 
-use onednnl_sys::{
-    const_dnnl_primitive_attr_t, dnnl_batch_normalization_forward_primitive_desc_create,
-    dnnl_status_t,
-};
+use onednnl_sys::{dnnl_batch_normalization_forward_primitive_desc_create, dnnl_status_t};
 
 use crate::{
     memory::descriptor::MemoryDescriptor,
-    primitive::{descriptor::PrimitiveDescriptor, Forward, PropType},
+    primitive::{
+        attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, PropType,
+    },
 };
 
 use super::PrimitiveConfig;
@@ -17,7 +16,7 @@ pub struct ForwardBatchNormConfig<'a> {
     dst_desc: &'a MemoryDescriptor,
     epsilon: f32,
     flags: c_uint,
-    attr: const_dnnl_primitive_attr_t,
+    attr: &'a PrimitiveAttributes,
 }
 
 impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardBatchNormConfig<'a> {
@@ -36,7 +35,7 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardBatchN
                 self.dst_desc.handle,
                 self.epsilon,
                 self.flags,
-                self.attr,
+                self.attr.handle,
             )
         };
 

@@ -13,6 +13,7 @@ use {
             Memory,
         },
         primitive::{
+            attributes::PrimitiveAttributes,
             config::binary::{Binary, ForwardBinaryConfig},
             ExecArg, ForwardBinary, Primitive, PropForwardInference,
         },
@@ -41,7 +42,7 @@ fn binary_add(b: &mut Bencher) {
         src0_desc: &src0_desc,
         src1_desc: &src1_desc,
         dst_desc: &dst_desc,
-        attr: std::ptr::null_mut(),
+        attr: &PrimitiveAttributes::new().unwrap(),
     };
 
     let primitive =
