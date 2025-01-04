@@ -10,7 +10,7 @@
 | `concat`          |    ❌    |    ⬜    |  ❌  |  ❌   | 
 | `convolution`     |    ❌    |    ❌    |  ❌  |  ❌   |
 | `deconvolution`   |    ❌    |    ❌    |  ❌  |  ❌   |
-| `eltwise`         |    ✅    |    ❌    |  ❌  |  ❌   |
+| `eltwise`         |    ✅    |    ✅    |  ✅  |  ❌   |
 | `gemm`            |    ❌    |    ⬜    |  ❌  |  ❌   | 
 | `group_norm`      |    ❌    |    ❌    |  ❌  |  ❌   |
 | `gru`             |    ❌    |    ❌    |  ❌  |  ❌   |
@@ -23,7 +23,7 @@
 | `matmul`          |    ✅    |    ❌    |  ✅  |  ❌   |
 | `pooling`         |    ❌    |    ❌    |  ❌  |  ❌   |
 | `prelu`           |    ❌    |    ❌    |  ❌  |  ❌   |
-| `reduction`       |    ❌    |    ⬜    |  ❌  |  ❌   | 
+| `reduction`       |    ✅    |    ⬜    |  ✅  |  ❌   | 
 | `reorder`         |    ❌    |    ⬜    |  ❌  |  ❌   | 
 | `resampling`      |    ❌    |    ❌    |  ❌  |  ❌   |
 | `shuffle`         |    ❌    |    ❌    |  ❌  |  ❌   |
@@ -34,6 +34,5 @@
 ## Known Issues
 
 - Missing support for GPU (SYCL and OpenCL)
-- The Memory struct doesn't make sense wrt ownership of Buffer
 - Missing Primitive attrs
 - Missing postops
