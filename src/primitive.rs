@@ -5,6 +5,7 @@ use {
         batch_norm::ForwardBatchNormConfig,
         binary::ForwardBinaryConfig,
         eltwise::{BackwardEltwiseConfig, ForwardEltwiseConfig},
+        inner_product::BackwardWeightsInnerProductConfig,
         matmul::ForwardMatMulConfig,
         reduction::ForwardReductionConfig,
         PrimitiveConfig,
@@ -105,6 +106,10 @@ impl PropType<Backward> for PropBackward {
     const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_backward;
 }
 
+impl PropType<Backward> for PropBackwardWeights {
+    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_backward_weights;
+}
+
 pub struct ForwardAuGru<P: PropType<Forward>> {
     pub prop_type: P,
 }
@@ -180,6 +185,13 @@ pub struct BackwardEltwise<T: PropType<Backward>> {
 impl<'a, P: PropType<Backward>> Operation<'a, Backward, P> for BackwardEltwise<P> {
     const TYPE: OperationType = OperationType::Eltwise;
     type OperationConfig = BackwardEltwiseConfig<'a>;
+}
+
+pub struct BackwardWeightsInnerProduct;
+
+impl<'a> Operation<'a, Backward, PropBackwardWeights> for BackwardWeightsInnerProduct {
+    const TYPE: OperationType = OperationType::InnerProduct;
+    type OperationConfig = BackwardWeightsInnerProductConfig<'a>;
 }
 
 pub struct Primitive {
