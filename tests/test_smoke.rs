@@ -62,11 +62,7 @@ pub fn test_smoke_binary_add() {
 
     let src1_memory = Memory::new_with_user_buffer(engine.clone(), src1_desc, s1_buffer).unwrap();
 
-    let output = AlignedBuffer::<f32>::zeroed(dst_desc.get_size() / data_type_size(dnnl_f32))
-        .unwrap()
-        .into();
-
-    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, output).unwrap();
+    let dst_memory = Memory::new_with_library_buffer(engine.clone(), dst_desc).unwrap();
 
     // Configure the binary operation
 

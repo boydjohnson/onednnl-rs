@@ -22,7 +22,7 @@ pub fn data_type_size(ty: dnnl_data_type_t::Type) -> usize {
 const DNNL_MEMORY_NONE: *mut c_void = std::ptr::null_mut();
 
 /// Memory with library allocated buffer
-const DNNL_MEMORY_ALLOCATE: *mut c_void = (-1isize) as *mut c_void;
+const DNNL_MEMORY_ALLOCATE: *mut c_void = (usize::MAX) as *mut c_void;
 
 pub mod buffer;
 pub mod descriptor;
@@ -231,30 +231,33 @@ impl<T> Memory<T> {
         T: Clone,
     {
         match self.engine.get_kind() {
-            Ok(dnnl_engine_kind_t::dnnl_cpu) => match &self.buffer_type {
+            Ok(Engine::CPU) => match &self.buffer_type {
                 BufferType::UserAllocated(buffer) => Ok(buffer.as_slice().to_vec()),
                 BufferType::LibraryAllocated => {
-                    let buffer = AlignedBuffer::<T>::zeroed(
-                        self.desc.get_size() / unsafe { dnnl_data_type_size(dnnl_f32) },
-                    )
-                    .unwrap();
+                    let mut buffer_ptr = std::ptr::null_mut();
 
                     let status = unsafe {
                         dnnl_memory_get_data_handle(
                             self.handle,
-                            buffer.ptr.as_ptr() as *mut *mut c_void,
+                            &mut buffer_ptr as *mut *mut _ as *mut *mut c_void,
                         )
                     };
 
                     if status == dnnl_status_t::dnnl_success {
-                        Ok(buffer.as_slice().to_vec())
+                        Ok(unsafe {
+                            std::slice::from_raw_parts(
+                                buffer_ptr as *const T,
+                                self.desc.get_size() / data_type_size(dnnl_f32),
+                            )
+                        }
+                        .to_vec())
                     } else {
                         Err(status.into())
                     }
                 }
                 BufferType::None => todo!("return error"),
             },
-            Ok(dnnl_engine_kind_t::dnnl_gpu) => {
+            Ok(Engine::GPU) => {
                 todo!("Return the right data")
             }
             Ok(dnnl_engine_kind_t::dnnl_any_engine) => {
