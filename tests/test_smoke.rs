@@ -12,6 +12,7 @@ use {
             Memory,
         },
         primitive::{
+            attributes::PrimitiveAttributes,
             config::{
                 binary::{Binary, ForwardBinaryConfig},
                 eltwise::{BackwardEltwiseConfig, ForwardEltwiseConfig, Unary},
@@ -43,7 +44,7 @@ pub fn test_smoke_binary_add() {
         src0_desc: &src0_desc,
         src1_desc: &src1_desc,
         dst_desc: &dst_desc,
-        attr: std::ptr::null_mut(),
+        attr: &PrimitiveAttributes::new().unwrap(),
     };
 
     // Create the primitive
@@ -61,11 +62,7 @@ pub fn test_smoke_binary_add() {
 
     let src1_memory = Memory::new_with_user_buffer(engine.clone(), src1_desc, s1_buffer).unwrap();
 
-    let output = AlignedBuffer::<f32>::zeroed(dst_desc.get_size() / data_type_size(dnnl_f32))
-        .unwrap()
-        .into();
-
-    let dst_memory = Memory::new_with_user_buffer(engine.clone(), dst_desc, output).unwrap();
+    let dst_memory = Memory::new_with_library_buffer(engine.clone(), dst_desc).unwrap();
 
     // Configure the binary operation
 
@@ -139,7 +136,7 @@ pub fn test_smoke_matmul() {
         weights_desc: &weights_desc,
         bias_desc: &zero_bias_desc, // Disables bias
         dst_desc: &dst_desc,
-        attr: std::ptr::null_mut(), // No special attributes
+        attr: &PrimitiveAttributes::new().unwrap(),
     };
 
     // Step 5: Create and Configure the MatMul Primitive
@@ -245,7 +242,7 @@ pub fn test_reduction_smoke() {
         dst_desc: &dst_desc,
         p: 0.0,
         eps: 0.0,
-        attr: std::ptr::null_mut(),
+        attr: &PrimitiveAttributes::new().unwrap(),
     };
 
     // Create the primitive
@@ -311,7 +308,7 @@ fn test_relu_forward_backward() {
         dst_desc: &dst_md,
         alpha: 0.0,
         beta: 0.0,
-        attr: std::ptr::null_mut(), // no special attributes
+        attr: &PrimitiveAttributes::new().unwrap(), // no special attributes
     };
 
     // 3b. Create the forward primitive
@@ -391,7 +388,7 @@ fn test_relu_forward_backward() {
         alpha: 0.0,
         beta: 0.0,
         forward_hint_desc,
-        attr: std::ptr::null_mut(),
+        attr: &PrimitiveAttributes::new().unwrap(),
     };
 
     // 5b. Create the backward primitive

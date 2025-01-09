@@ -2,12 +2,14 @@ use {
     super::PrimitiveConfig,
     crate::{
         memory::descriptor::MemoryDescriptor,
-        primitive::{descriptor::PrimitiveDescriptor, Backward, Forward, PropType},
+        primitive::{
+            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Backward, Forward,
+            PropType,
+        },
     },
     onednnl_sys::{
         dnnl_alg_kind_t, dnnl_eltwise_backward_primitive_desc_create,
-        dnnl_eltwise_forward_primitive_desc_create, dnnl_primitive_attr_t, dnnl_primitive_desc_t,
-        dnnl_status_t,
+        dnnl_eltwise_forward_primitive_desc_create, dnnl_primitive_desc_t, dnnl_status_t,
     },
 };
 
@@ -17,7 +19,7 @@ pub struct ForwardEltwiseConfig<'a> {
     pub dst_desc: &'a MemoryDescriptor,
     pub alpha: f32,
     pub beta: f32,
-    pub attr: dnnl_primitive_attr_t,
+    pub attr: &'a PrimitiveAttributes,
 }
 
 impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardEltwiseConfig<'a> {
@@ -36,7 +38,7 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardEltwis
                 self.dst_desc.handle,
                 self.alpha,
                 self.beta,
-                self.attr,
+                self.attr.handle,
             )
         };
 
@@ -96,7 +98,7 @@ pub struct BackwardEltwiseConfig<'a> {
     pub alpha: f32,
     pub beta: f32,
     pub forward_hint_desc: dnnl_primitive_desc_t,
-    pub attr: dnnl_primitive_attr_t,
+    pub attr: &'a PrimitiveAttributes,
 }
 
 impl<'a, P: PropType<Backward>> PrimitiveConfig<'a, Backward, P> for BackwardEltwiseConfig<'a> {
@@ -116,7 +118,7 @@ impl<'a, P: PropType<Backward>> PrimitiveConfig<'a, Backward, P> for BackwardElt
                 self.alpha,
                 self.beta,
                 self.forward_hint_desc,
-                self.attr,
+                self.attr.handle,
             )
         };
 

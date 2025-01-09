@@ -14,6 +14,15 @@ pub struct PrimitiveAttributes {
 }
 
 impl PrimitiveAttributes {
+    /// Create a PrimitiveAttributes
+    ///
+    /// ```
+    /// use onednnl::primitive::attributes::PrimitiveAttributes;
+    ///
+    /// let attr = PrimitiveAttributes::new();
+    ///
+    /// assert!(attr.is_ok());
+    /// ```
     pub fn new() -> Result<Self, DnnlError> {
         let mut handle = std::ptr::null_mut();
         let status = unsafe { dnnl_primitive_attr_create(&mut handle) };

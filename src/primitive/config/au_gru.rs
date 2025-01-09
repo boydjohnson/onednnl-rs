@@ -4,7 +4,10 @@ use {
         engine::Engine,
         error::DnnlError,
         memory::descriptor::MemoryDescriptor,
-        primitive::{descriptor::PrimitiveDescriptor, Backward, Forward, PropType},
+        primitive::{
+            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Backward, Forward,
+            PropType,
+        },
     },
     onednnl_sys::{
         dnnl_augru_backward_primitive_desc_create, dnnl_augru_forward_primitive_desc_create,
@@ -24,7 +27,7 @@ pub struct ForwardAuGruConfig<'a> {
     dst_layer_desc: &'a MemoryDescriptor,
     dst_iter_desc: &'a MemoryDescriptor,
     flags: c_uint,
-    attr: dnnl_primitive_attr_t,
+    attr: &'a PrimitiveAttributes,
 }
 
 impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardAuGruConfig<'a> {
@@ -45,7 +48,7 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardAuGruC
                 self.dst_layer_desc.handle,
                 self.dst_iter_desc.handle,
                 self.flags,
-                self.attr,
+                self.attr.handle,
             )
         };
 

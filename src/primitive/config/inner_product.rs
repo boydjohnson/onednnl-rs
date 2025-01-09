@@ -2,11 +2,11 @@ use {
     super::PrimitiveConfig,
     crate::{
         memory::descriptor::MemoryDescriptor,
-        primitive::{descriptor::PrimitiveDescriptor, Forward, PropType},
+        primitive::{
+            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, PropType,
+        },
     },
-    onednnl_sys::{
-        dnnl_inner_product_forward_primitive_desc_create, dnnl_primitive_attr_t, dnnl_status_t,
-    },
+    onednnl_sys::{dnnl_inner_product_forward_primitive_desc_create, dnnl_status_t},
 };
 
 pub struct ForwardInnerProductConfig<'a> {
@@ -14,7 +14,7 @@ pub struct ForwardInnerProductConfig<'a> {
     pub weights_desc: &'a MemoryDescriptor,
     pub bias_desc: &'a MemoryDescriptor,
     pub dst_desc: &'a MemoryDescriptor,
-    pub attr: dnnl_primitive_attr_t,
+    pub attr: &'a PrimitiveAttributes,
 }
 
 impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardInnerProductConfig<'a> {
@@ -32,7 +32,7 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardInnerP
                 self.weights_desc.handle,
                 self.bias_desc.handle,
                 self.dst_desc.handle,
-                self.attr,
+                self.attr.handle,
             )
         };
         if status == dnnl_status_t::dnnl_success {

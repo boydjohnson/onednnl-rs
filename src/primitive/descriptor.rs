@@ -24,6 +24,7 @@ impl PrimitiveDescriptor {
     /// use onednnl::memory::format_tag::x;
     /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
     /// use onednnl::memory::descriptor::MemoryDescriptor;
+    /// use onednnl::primitive::attributes::PrimitiveAttributes;
     ///
     ///
     ///
@@ -39,7 +40,7 @@ impl PrimitiveDescriptor {
     ///     src0_desc: &src0_desc,
     ///     src1_desc: &src1_desc,
     ///     dst_desc: &dst_desc,
-    ///     attr: std::ptr::null_mut(), // Default attributes
+    ///     attr: &PrimitiveAttributes::new().unwrap(),
     /// };
     ///
     /// // Create a new PrimitiveDescriptor for the forward binary operation
