@@ -70,22 +70,26 @@ impl<T> Memory<T> {
     /// # Example
     ///
     /// ```
-    /// use std::ffi::c_void;
-    /// use std::sync::Arc;
-    /// use onednnl::{engine::Engine, memory::Memory, memory::descriptor::MemoryDescriptor, error::DnnlError};
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    /// use onednnl::memory::format_tag::abcdef;
-    /// use onednnl::memory::buffer::AlignedBuffer;
-    /// use onednnl::memory::data_type_size;
+    /// use {
+    ///     onednnl::{
+    ///         engine::Engine,
+    ///         error::DnnlError,
+    ///         memory::{
+    ///             buffer::AlignedBuffer, data_type_size, descriptor::MemoryDescriptor,
+    ///             format_tag::abcdef, Memory,
+    ///         },
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t::dnnl_f32,
+    ///     std::{ffi::c_void, sync::Arc},
+    /// };
     ///
     /// let engine = Arc::new(Engine::new(Engine::CPU, 0).unwrap());
     ///
-    ///     
     /// let dims = [1, 3, 224, 224, 112, 112];
     ///
-    ///     
     /// let mem_desc = MemoryDescriptor::new::<6, abcdef>(dims, dnnl_f32).unwrap();
-    /// let mut buffer = AlignedBuffer::<f32>::zeroed(mem_desc.get_size() / data_type_size(dnnl_f32)).unwrap();
+    /// let mut buffer =
+    ///     AlignedBuffer::<f32>::zeroed(mem_desc.get_size() / data_type_size(dnnl_f32)).unwrap();
     /// let memory = Memory::new_with_user_buffer(Arc::clone(&engine), mem_desc, buffer);
     /// assert!(memory.is_ok());
     /// ```
@@ -139,21 +143,22 @@ impl<T> Memory<T> {
     /// # Example
     ///
     /// ```
-    /// use std::ffi::c_void;
-    /// use std::sync::Arc;
-    /// use onednnl::{engine::Engine, memory::Memory, memory::descriptor::MemoryDescriptor, error::DnnlError};
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    /// use onednnl::memory::format_tag::abcd;
+    /// use {
+    ///     onednnl::{
+    ///         engine::Engine,
+    ///         error::DnnlError,
+    ///         memory::{descriptor::MemoryDescriptor, format_tag::abcd, Memory},
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t::dnnl_f32,
+    ///     std::{ffi::c_void, sync::Arc},
+    /// };
     ///
     /// let engine = Arc::new(Engine::new(Engine::CPU, 0).unwrap());
     ///
-    ///     
     /// let dims = [1, 3, 224, 224];
     ///
-    ///     
     /// let mem_desc = MemoryDescriptor::new::<4, abcd>(dims, dnnl_f32).unwrap();
     ///
-    ///     
     /// let memory = Memory::<f32>::new_with_library_buffer(Arc::clone(&engine), mem_desc);
     /// assert!(memory.is_ok());
     /// ```
@@ -187,21 +192,22 @@ impl<T> Memory<T> {
     /// # Example
     ///
     /// ```
-    /// use std::ffi::c_void;
-    /// use std::sync::Arc;
-    /// use onednnl::{engine::Engine, memory::Memory, memory::descriptor::MemoryDescriptor, error::DnnlError};
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    /// use onednnl::memory::format_tag::abcdef;
+    /// use {
+    ///     onednnl::{
+    ///         engine::Engine,
+    ///         error::DnnlError,
+    ///         memory::{descriptor::MemoryDescriptor, format_tag::abcdef, Memory},
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t::dnnl_f32,
+    ///     std::{ffi::c_void, sync::Arc},
+    /// };
     ///
     /// let engine = Arc::new(Engine::new(Engine::CPU, 0).unwrap());
     ///
-    ///     
     /// let dims = [1, 3, 224, 224, 112, 112];
     ///
-    ///     
     /// let mem_desc = MemoryDescriptor::new::<6, abcdef>(dims, dnnl_f32).unwrap();
     ///
-    ///     
     /// let memory = Memory::<f32>::new_without_buffer(Arc::clone(&engine), mem_desc);
     /// assert!(memory.is_ok());
     /// ```

@@ -37,8 +37,9 @@ impl PrimitiveAttributes {
     /// Get the accumulation mode
     ///
     /// ```
-    /// use onednnl::primitive::attributes::PrimitiveAttributes;
-    /// use onednnl_sys::dnnl_accumulation_mode_t;
+    /// use {
+    ///     onednnl::primitive::attributes::PrimitiveAttributes, onednnl_sys::dnnl_accumulation_mode_t,
+    /// };
     ///
     /// let attr = PrimitiveAttributes::new();
     ///
@@ -46,8 +47,10 @@ impl PrimitiveAttributes {
     ///
     /// let attr = attr.unwrap();
     ///
-    /// assert_eq!(attr.get_accumulation_mode(), Ok(dnnl_accumulation_mode_t::dnnl_accumulation_mode_strict));
-    ///
+    /// assert_eq!(
+    ///     attr.get_accumulation_mode(),
+    ///     Ok(dnnl_accumulation_mode_t::dnnl_accumulation_mode_strict)
+    /// );
     /// ```
     pub fn get_accumulation_mode(&self) -> Result<dnnl_accumulation_mode_t::Type, DnnlError> {
         let mut output = 0;
@@ -63,8 +66,9 @@ impl PrimitiveAttributes {
     /// Set the accumulation mode
     ///
     /// ```
-    /// use onednnl::primitive::attributes::PrimitiveAttributes;
-    /// use onednnl_sys::dnnl_accumulation_mode_t;
+    /// use {
+    ///     onednnl::primitive::attributes::PrimitiveAttributes, onednnl_sys::dnnl_accumulation_mode_t,
+    /// };
     ///
     /// let attr = PrimitiveAttributes::new();
     ///
@@ -72,10 +76,14 @@ impl PrimitiveAttributes {
     ///
     /// let mut attr = attr.unwrap();
     ///
-    /// assert!(attr.set_accumulation_mode(dnnl_accumulation_mode_t::dnnl_accumulation_mode_any).is_ok());
+    /// assert!(attr
+    ///     .set_accumulation_mode(dnnl_accumulation_mode_t::dnnl_accumulation_mode_any)
+    ///     .is_ok());
     ///
-    /// assert_eq!(attr.get_accumulation_mode(), Ok(dnnl_accumulation_mode_t::dnnl_accumulation_mode_any));
-    ///
+    /// assert_eq!(
+    ///     attr.get_accumulation_mode(),
+    ///     Ok(dnnl_accumulation_mode_t::dnnl_accumulation_mode_any)
+    /// );
     /// ```
     pub fn set_accumulation_mode(
         &mut self,
@@ -93,8 +101,9 @@ impl PrimitiveAttributes {
     /// Get the deterministic attr
     ///
     /// ```
-    /// use onednnl::primitive::attributes::PrimitiveAttributes;
-    /// use onednnl_sys::dnnl_accumulation_mode_t;
+    /// use {
+    ///     onednnl::primitive::attributes::PrimitiveAttributes, onednnl_sys::dnnl_accumulation_mode_t,
+    /// };
     ///
     /// let attr = PrimitiveAttributes::new();
     ///
@@ -103,7 +112,6 @@ impl PrimitiveAttributes {
     /// let attr = attr.unwrap();
     ///
     /// assert_eq!(attr.get_deterministic(), Ok(false));
-    ///
     /// ```
     pub fn get_deterministic(&self) -> Result<bool, DnnlError> {
         let mut output = 0;
@@ -120,8 +128,9 @@ impl PrimitiveAttributes {
     /// Set the deterministic attr
     ///
     /// ```
-    /// use onednnl::primitive::attributes::PrimitiveAttributes;
-    /// use onednnl_sys::dnnl_accumulation_mode_t;
+    /// use {
+    ///     onednnl::primitive::attributes::PrimitiveAttributes, onednnl_sys::dnnl_accumulation_mode_t,
+    /// };
     ///
     /// let attr = PrimitiveAttributes::new();
     ///

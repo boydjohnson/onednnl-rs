@@ -68,7 +68,6 @@ impl Engine {
     /// use onednnl::engine::Engine;
     ///
     /// assert!(Engine::get_count(Engine::CPU) > 0);
-    ///
     /// ```
     pub fn get_count(kind: dnnl_engine_kind_t::Type) -> usize {
         unsafe { dnnl_engine_get_count(kind) }

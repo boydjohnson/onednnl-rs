@@ -14,8 +14,8 @@ use {
         },
         primitive::{
             attributes::PrimitiveAttributes,
-            config::binary::{Binary, ForwardBinaryConfig},
-            ExecArg, ForwardBinary, Primitive, PropForwardInference,
+            config::binary::{Binary, ForwardBinary, ForwardBinaryConfig},
+            ExecArg, Primitive, PropForwardInference,
         },
         set_primitive_cache_capacity,
         stream::Stream,
