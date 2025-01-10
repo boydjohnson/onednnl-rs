@@ -20,9 +20,9 @@
 | `lbr_gru`         |    ❌    |    ❌    |  ❌  |  ❌   | 
 | `lrn`             |    ❌    |    ❌    |  ❌  |  ❌   |
 | `lstm`            |    ❌    |    ❌    |  ❌  |  ❌   |
-| `matmul`          |    ✅    |    ❌    |  ✅  |  ❌   |
+| `matmul`          |    ✅    |    ⬜    |  ✅  |  ❌   |
 | `pooling`         |    ❌    |    ❌    |  ❌  |  ❌   |
-| `prelu`           |    ❌    |    ❌    |  ❌  |  ❌   |
+| `prelu`           |    ✅    |    ❌    |  ❌  |  ❌   |
 | `reduction`       |    ✅    |    ⬜    |  ✅  |  ❌   | 
 | `reorder`         |    ❌    |    ⬜    |  ❌  |  ❌   | 
 | `resampling`      |    ❌    |    ❌    |  ❌  |  ❌   |

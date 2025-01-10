@@ -10,6 +10,7 @@ pub mod binary;
 pub mod eltwise;
 pub mod inner_product;
 pub mod matmul;
+pub mod prelu;
 pub mod reduction;
 
 pub trait PrimitiveConfig<'a, D: Direction, P: PropType<D>> {
