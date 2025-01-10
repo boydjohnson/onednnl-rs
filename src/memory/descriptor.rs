@@ -43,10 +43,13 @@ use {super::format_tag::FormatTag, crate::error::DnnlError};
 impl MemoryDescriptor {
     /// Create a new MemoryDescriptor
     /// ```
-    /// use onednnl::memory::descriptor::MemoryDescriptor;
-    /// use onednnl::memory::format_tag::{x, ab};
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    ///
+    /// use {
+    ///     onednnl::memory::{
+    ///         descriptor::MemoryDescriptor,
+    ///         format_tag::{ab, x},
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t::dnnl_f32,
+    /// };
     ///
     /// let md_1d = MemoryDescriptor::new::<1, x>([15], dnnl_f32);
     ///
@@ -55,7 +58,6 @@ impl MemoryDescriptor {
     /// let md_2d = MemoryDescriptor::new::<2, ab>([2, 3], dnnl_f32);
     ///
     /// assert!(md_2d.is_ok());
-    ///
     /// ```
     pub fn new<const NDIMS: usize, T: FormatTag<NDIMS>>(
         dims: impl AsRef<[dnnl_dim_t]>,
@@ -92,9 +94,7 @@ impl MemoryDescriptor {
 
     /// Create a new MemoryDescriptor
     /// ```
-    /// use onednnl::memory::descriptor::MemoryDescriptor;
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    ///
+    /// use {onednnl::memory::descriptor::MemoryDescriptor, onednnl_sys::dnnl_data_type_t::dnnl_f32};
     ///
     /// let md = MemoryDescriptor::new_any(&[15, 15], dnnl_f32);
     ///
@@ -122,10 +122,13 @@ impl MemoryDescriptor {
     /// Clones the memory descriptor.
     ///
     /// ```
-    /// use onednnl::memory::descriptor::MemoryDescriptor;
-    /// use onednnl::memory::format_tag::{x, ab};
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    ///
+    /// use {
+    ///     onednnl::memory::{
+    ///         descriptor::MemoryDescriptor,
+    ///         format_tag::{ab, x},
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t::dnnl_f32,
+    /// };
     ///
     /// let md_1d = MemoryDescriptor::new::<1, x>([15], dnnl_f32);
     ///
@@ -151,10 +154,13 @@ impl MemoryDescriptor {
 
     /// Checks if two memory descriptors are equal.
     /// ```
-    /// use onednnl::memory::descriptor::MemoryDescriptor;
-    /// use onednnl::memory::format_tag::{x, ab};
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    ///
+    /// use {
+    ///     onednnl::memory::{
+    ///         descriptor::MemoryDescriptor,
+    ///         format_tag::{ab, x},
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t::dnnl_f32,
+    /// };
     ///
     /// let md_1d = MemoryDescriptor::new::<1, x>([15], dnnl_f32);
     ///
@@ -170,7 +176,6 @@ impl MemoryDescriptor {
     /// assert!(md_1d.equal(&md_1d_2));
     ///
     /// assert_eq!(md_1d, md_1d_2);
-    ///
     /// ```
     pub fn equal(&self, other: &Self) -> bool {
         let is_equal = unsafe { dnnl_memory_desc_equal(self.handle, other.handle) };
@@ -179,10 +184,13 @@ impl MemoryDescriptor {
 
     /// Retrieves the blob associated with the memory descriptor.
     /// ```
-    /// use onednnl::memory::descriptor::MemoryDescriptor;
-    /// use onednnl::memory::format_tag::{x, ab};
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    ///
+    /// use {
+    ///     onednnl::memory::{
+    ///         descriptor::MemoryDescriptor,
+    ///         format_tag::{ab, x},
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t::dnnl_f32,
+    /// };
     ///
     /// let md_1d = MemoryDescriptor::new::<1, x>([15], dnnl_f32);
     ///
@@ -203,7 +211,6 @@ impl MemoryDescriptor {
     /// let md_1d_2 = md_1d_2.unwrap();
     ///
     /// assert!(md_1d_2.equal(&md_1d));
-    ///
     /// ```
     pub fn get_blob(&self) -> Result<Vec<u8>, DnnlError> {
         let mut size: usize = 0;
@@ -233,10 +240,13 @@ impl MemoryDescriptor {
     /// This is not the same as the size of the MemoryDescriptor blob.
     ///
     /// ```
-    /// use onednnl::memory::descriptor::MemoryDescriptor;
-    /// use onednnl::memory::format_tag::{x, ab};
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    ///
+    /// use {
+    ///     onednnl::memory::{
+    ///         descriptor::MemoryDescriptor,
+    ///         format_tag::{ab, x},
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t::dnnl_f32,
+    /// };
     ///
     /// let md_1d = MemoryDescriptor::new::<1, x>([15], dnnl_f32);
     ///
@@ -244,11 +254,9 @@ impl MemoryDescriptor {
     ///
     /// let md_1d = md_1d.unwrap();
     ///
-    ///
     /// let size = md_1d.get_size();
     ///
     /// assert!(size > 0);
-    ///
     /// ```
     pub fn get_size(&self) -> usize {
         unsafe { dnnl_memory_desc_get_size(self.handle) }
@@ -265,12 +273,16 @@ impl MemoryDescriptor {
     /// A `Result` containing the query output on success or a `DnnlError` on failure.
     ///
     /// ```
-    /// use onednnl::memory::descriptor::MemoryDescriptor;
-    /// use onednnl::memory::format_tag::abcd;
-    /// use onednnl::memory::descriptor::{NDimsQuery, DimsQuery, DataTypeQuery};
-    /// use onednnl_sys::dnnl_data_type_t;
+    /// use {
+    ///     onednnl::memory::{
+    ///         descriptor::{DataTypeQuery, DimsQuery, MemoryDescriptor, NDimsQuery},
+    ///         format_tag::abcd,
+    ///     },
+    ///     onednnl_sys::dnnl_data_type_t,
+    /// };
     ///
-    /// let md = MemoryDescriptor::new::<4, abcd>([1, 3, 228, 228], dnnl_data_type_t::dnnl_f32).unwrap();
+    /// let md =
+    ///     MemoryDescriptor::new::<4, abcd>([1, 3, 228, 228], dnnl_data_type_t::dnnl_f32).unwrap();
     ///
     /// assert_eq!(md.query::<NDimsQuery>(), Ok(4));
     /// assert_eq!(md.query::<DimsQuery>(), Ok(vec![1, 3, 228, 228]));

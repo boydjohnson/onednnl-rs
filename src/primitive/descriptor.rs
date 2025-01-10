@@ -15,18 +15,19 @@ impl PrimitiveDescriptor {
     /// # Example
     ///
     /// ```
-    /// use onednnl::primitive::{Forward, PropForwardInference};
-    /// use onednnl::engine::Engine;
-    /// use onednnl::primitive::ForwardBinary;
-    /// use onednnl::primitive::config::binary::ForwardBinaryConfig;
-    /// use onednnl::primitive::descriptor::PrimitiveDescriptor;
-    /// use onednnl_sys::dnnl_alg_kind_t;
-    /// use onednnl::memory::format_tag::x;
-    /// use onednnl_sys::dnnl_data_type_t::dnnl_f32;
-    /// use onednnl::memory::descriptor::MemoryDescriptor;
-    /// use onednnl::primitive::attributes::PrimitiveAttributes;
-    ///
-    ///
+    /// use {
+    ///     onednnl::{
+    ///         engine::Engine,
+    ///         memory::{descriptor::MemoryDescriptor, format_tag::x},
+    ///         primitive::{
+    ///             attributes::PrimitiveAttributes,
+    ///             config::binary::{ForwardBinary, ForwardBinaryConfig},
+    ///             descriptor::PrimitiveDescriptor,
+    ///             Forward, PropForwardInference,
+    ///         },
+    ///     },
+    ///     onednnl_sys::{dnnl_alg_kind_t, dnnl_data_type_t::dnnl_f32},
+    /// };
     ///
     /// let engine = Engine::new(Engine::CPU, 0).unwrap();
     ///

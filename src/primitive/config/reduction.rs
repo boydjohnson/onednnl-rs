@@ -3,8 +3,8 @@ use {
     crate::{
         memory::descriptor::MemoryDescriptor,
         primitive::{
-            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward,
-            PropForwardInference,
+            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, Operation,
+            OperationType, PropForwardInference,
         },
     },
     onednnl_sys::{dnnl_alg_kind_t, dnnl_reduction_primitive_desc_create, dnnl_status_t},
@@ -60,4 +60,14 @@ impl Reduction {
         dnnl_alg_kind_t::dnnl_reduction_norm_lp_power_p_max;
     pub const NORM_LP_POWER_P_SUM: dnnl_alg_kind_t::Type =
         dnnl_alg_kind_t::dnnl_reduction_norm_lp_power_p_sum;
+}
+
+pub struct ForwardReduction {
+    pub prop_type: PropForwardInference,
+}
+
+impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardReduction {
+    const TYPE: OperationType = OperationType::Reduction;
+
+    type OperationConfig = ForwardReductionConfig<'a>;
 }

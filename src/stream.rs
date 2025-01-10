@@ -24,8 +24,7 @@ impl Stream {
     /// Create a new Stream
     ///
     /// ```
-    /// use onednnl::engine::Engine;
-    /// use onednnl::stream::Stream;
+    /// use onednnl::{engine::Engine, stream::Stream};
     ///
     /// let engine = Engine::new(Engine::CPU, 0).unwrap();
     ///
@@ -40,8 +39,7 @@ impl Stream {
     /// Create a new Stream with non-default flags
     ///
     /// ```
-    /// use onednnl::engine::Engine;
-    /// use onednnl::stream::Stream;
+    /// use onednnl::{engine::Engine, stream::Stream};
     ///
     /// let engine = Engine::new(Engine::CPU, 0).unwrap();
     ///

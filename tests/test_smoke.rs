@@ -14,13 +14,15 @@ use {
         primitive::{
             attributes::PrimitiveAttributes,
             config::{
-                binary::{Binary, ForwardBinaryConfig},
-                eltwise::{BackwardEltwiseConfig, ForwardEltwiseConfig, Unary},
-                matmul::ForwardMatMulConfig,
-                reduction::{ForwardReductionConfig, Reduction},
+                binary::{Binary, ForwardBinary, ForwardBinaryConfig},
+                eltwise::{
+                    BackwardEltwise, BackwardEltwiseConfig, ForwardEltwise, ForwardEltwiseConfig,
+                    Unary,
+                },
+                matmul::{ForwardMatMul, ForwardMatMulConfig},
+                reduction::{ForwardReduction, ForwardReductionConfig, Reduction},
             },
-            BackwardEltwise, ExecArg, ForwardBinary, ForwardEltwise, ForwardMatMul,
-            ForwardReduction, Primitive, PropBackward, PropBackwardData, PropBackwardWeights,
+            ExecArg, Primitive, PropBackward, PropBackwardData, PropBackwardWeights,
             PropForwardInference, PropForwardTraining,
         },
         stream::Stream,
@@ -463,12 +465,9 @@ fn test_inner_product_nchw_to_nc_backprop() {
             DNNL_ARG_BIAS, DNNL_ARG_DIFF_BIAS, DNNL_ARG_DIFF_DST, DNNL_ARG_DIFF_SRC,
             DNNL_ARG_DIFF_WEIGHTS, DNNL_ARG_DST, DNNL_ARG_SRC, DNNL_ARG_WEIGHTS,
         },
-        primitive::{
-            config::inner_product::{
-                BackwardDataInnerProductConfig, BackwardWeightsInnerProductConfig,
-                ForwardInnerProductConfig,
-            },
-            BackwardDataInnerProduct, BackwardWeightsInnerProduct, ForwardInnerProduct,
+        primitive::config::inner_product::{
+            BackwardDataInnerProduct, BackwardDataInnerProductConfig, BackwardWeightsInnerProduct,
+            BackwardWeightsInnerProductConfig, ForwardInnerProduct, ForwardInnerProductConfig,
         },
     };
 

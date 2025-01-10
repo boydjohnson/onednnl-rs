@@ -4,7 +4,7 @@ use {
         memory::descriptor::MemoryDescriptor,
         primitive::{
             attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Backward, Forward,
-            PropBackwardData, PropBackwardWeights, PropType,
+            Operation, OperationType, PropBackwardData, PropBackwardWeights, PropType,
         },
     },
     onednnl_sys::{
@@ -120,4 +120,27 @@ impl<'a> PrimitiveConfig<'a, Backward, PropBackwardData> for BackwardDataInnerPr
             Err(status.into())
         }
     }
+}
+
+pub struct BackwardWeightsInnerProduct;
+
+impl<'a> Operation<'a, Backward, PropBackwardWeights> for BackwardWeightsInnerProduct {
+    const TYPE: OperationType = OperationType::InnerProduct;
+    type OperationConfig = BackwardWeightsInnerProductConfig<'a>;
+}
+
+pub struct BackwardDataInnerProduct;
+
+impl<'a> Operation<'a, Backward, PropBackwardData> for BackwardDataInnerProduct {
+    const TYPE: OperationType = OperationType::InnerProduct;
+    type OperationConfig = BackwardDataInnerProductConfig<'a>;
+}
+
+pub struct ForwardInnerProduct<P: PropType<Forward>> {
+    pub prop_type: P,
+}
+
+impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardInnerProduct<P> {
+    const TYPE: OperationType = OperationType::InnerProduct;
+    type OperationConfig = ForwardInnerProductConfig<'a>;
 }

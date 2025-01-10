@@ -3,8 +3,8 @@ use {
     crate::{
         memory::descriptor::MemoryDescriptor,
         primitive::{
-            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward,
-            PropForwardInference,
+            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, Operation,
+            OperationType, PropForwardInference, PropType,
         },
     },
     onednnl_sys::{dnnl_alg_kind_t, dnnl_binary_primitive_desc_create, dnnl_status_t},
@@ -59,4 +59,14 @@ impl Binary {
     pub const MUL: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_binary_mul;
     pub const NE: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_binary_ne;
     pub const SUB: dnnl_alg_kind_t::Type = dnnl_alg_kind_t::dnnl_binary_sub;
+}
+
+pub struct ForwardBinary<P: PropType<Forward>> {
+    pub prop_type: P,
+}
+
+impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardBinary<PropForwardInference> {
+    const TYPE: OperationType = OperationType::Binary;
+
+    type OperationConfig = ForwardBinaryConfig<'a>;
 }
