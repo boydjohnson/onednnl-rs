@@ -1,10 +1,10 @@
 use {
-    super::PrimitiveConfig,
     crate::{
         memory::descriptor::MemoryDescriptor,
         primitive::{
-            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, Operation,
-            OperationType, PropForwardInference, PropType,
+            attributes::PrimitiveAttributes, config::PrimitiveConfig,
+            descriptor::PrimitiveDescriptor, Forward, Operation, OperationType,
+            PropForwardInference, PropType,
         },
     },
     onednnl_sys::{dnnl_alg_kind_t, dnnl_binary_primitive_desc_create, dnnl_status_t},

@@ -2,15 +2,13 @@ use {
     crate::{
         memory::descriptor::MemoryDescriptor,
         primitive::{
-            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, Operation,
-            OperationType, PropType,
+            attributes::PrimitiveAttributes, config::PrimitiveConfig,
+            descriptor::PrimitiveDescriptor, Forward, Operation, OperationType, PropType,
         },
     },
     onednnl_sys::{dnnl_batch_normalization_forward_primitive_desc_create, dnnl_status_t},
     std::ffi::c_uint,
 };
-
-use super::PrimitiveConfig;
 
 pub struct ForwardBatchNormConfig<'a> {
     src_desc: &'a MemoryDescriptor,
