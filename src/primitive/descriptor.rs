@@ -17,8 +17,7 @@ impl PrimitiveDescriptor {
     /// ```
     /// use onednnl::primitive::{Forward, PropForwardInference};
     /// use onednnl::engine::Engine;
-    /// use onednnl::primitive::ForwardBinary;
-    /// use onednnl::primitive::config::binary::ForwardBinaryConfig;
+    /// use onednnl::primitive::config::binary::{ForwardBinaryConfig, ForwardBinary};
     /// use onednnl::primitive::descriptor::PrimitiveDescriptor;
     /// use onednnl_sys::dnnl_alg_kind_t;
     /// use onednnl::memory::format_tag::x;

@@ -3,7 +3,8 @@ use {
     crate::{
         memory::descriptor::MemoryDescriptor,
         primitive::{
-            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, PropType,
+            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, Operation,
+            OperationType, PropType,
         },
     },
     onednnl_sys::{dnnl_matmul_primitive_desc_create, dnnl_status_t},
@@ -40,4 +41,14 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardMatMul
             Err(status.into())
         }
     }
+}
+
+pub struct ForwardMatMul<P: PropType<Forward>> {
+    pub prop_type: P,
+}
+
+impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardMatMul<P> {
+    const TYPE: OperationType = OperationType::MatMul;
+
+    type OperationConfig = ForwardMatMulConfig<'a>;
 }

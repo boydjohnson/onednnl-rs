@@ -1,18 +1,6 @@
 use {
     crate::{engine::Engine, error::DnnlError, memory::Memory, stream::Stream},
-    config::{
-        au_gru::{BackwardAuGruConfig, ForwardAuGruConfig},
-        batch_norm::ForwardBatchNormConfig,
-        binary::ForwardBinaryConfig,
-        eltwise::{BackwardEltwiseConfig, ForwardEltwiseConfig},
-        inner_product::{
-            BackwardDataInnerProductConfig, BackwardWeightsInnerProductConfig,
-            ForwardInnerProductConfig,
-        },
-        matmul::ForwardMatMulConfig,
-        reduction::ForwardReductionConfig,
-        PrimitiveConfig,
-    },
+    config::PrimitiveConfig,
     descriptor::PrimitiveDescriptor,
     onednnl_sys::{
         dnnl_exec_arg_t, dnnl_primitive_create, dnnl_primitive_destroy, dnnl_primitive_execute,
@@ -120,106 +108,6 @@ impl PropType<Backward> for PropBackwardData {
     const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_backward_data;
 }
 
-pub struct ForwardAuGru<P: PropType<Forward>> {
-    pub prop_type: P,
-}
-
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardAuGru<P> {
-    const TYPE: OperationType = OperationType::Augru;
-    type OperationConfig = ForwardAuGruConfig<'a>;
-}
-
-pub struct BackwardAuGru<P: PropType<Backward>> {
-    pub prop_type: P,
-}
-
-impl<'a, P: PropType<Backward>> Operation<'a, Backward, P> for BackwardAuGru<P> {
-    const TYPE: OperationType = OperationType::Augru;
-    type OperationConfig = BackwardAuGruConfig<'a>;
-}
-
-pub struct ForwardBinary<P: PropType<Forward>> {
-    pub prop_type: P,
-}
-
-impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardBinary<PropForwardInference> {
-    const TYPE: OperationType = OperationType::Binary;
-
-    type OperationConfig = ForwardBinaryConfig<'a>;
-}
-
-pub struct ForwardBatchNorm<P: PropType<Forward>> {
-    pub prop_type: P,
-}
-
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardBatchNorm<P> {
-    const TYPE: OperationType = OperationType::BatchNormalization;
-
-    type OperationConfig = ForwardBatchNormConfig<'a>;
-}
-
-pub struct ForwardEltwise<P: PropType<Forward>> {
-    pub prop_type: P,
-}
-
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardEltwise<P> {
-    const TYPE: OperationType = OperationType::Eltwise;
-
-    type OperationConfig = ForwardEltwiseConfig<'a>;
-}
-
-pub struct ForwardMatMul<P: PropType<Forward>> {
-    pub prop_type: P,
-}
-
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardMatMul<P> {
-    const TYPE: OperationType = OperationType::MatMul;
-
-    type OperationConfig = ForwardMatMulConfig<'a>;
-}
-
-pub struct ForwardReduction {
-    pub prop_type: PropForwardInference,
-}
-
-impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardReduction {
-    const TYPE: OperationType = OperationType::Reduction;
-
-    type OperationConfig = ForwardReductionConfig<'a>;
-}
-
-pub struct BackwardEltwise<T: PropType<Backward>> {
-    pub prop_type: T,
-}
-
-impl<'a, P: PropType<Backward>> Operation<'a, Backward, P> for BackwardEltwise<P> {
-    const TYPE: OperationType = OperationType::Eltwise;
-    type OperationConfig = BackwardEltwiseConfig<'a>;
-}
-
-pub struct BackwardWeightsInnerProduct;
-
-impl<'a> Operation<'a, Backward, PropBackwardWeights> for BackwardWeightsInnerProduct {
-    const TYPE: OperationType = OperationType::InnerProduct;
-    type OperationConfig = BackwardWeightsInnerProductConfig<'a>;
-}
-
-pub struct BackwardDataInnerProduct;
-
-impl<'a> Operation<'a, Backward, PropBackwardData> for BackwardDataInnerProduct {
-    const TYPE: OperationType = OperationType::InnerProduct;
-    type OperationConfig = BackwardDataInnerProductConfig<'a>;
-}
-
-pub struct ForwardInnerProduct<P: PropType<Forward>> {
-    pub prop_type: P,
-}
-
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardInnerProduct<P> {
-    const TYPE: OperationType = OperationType::InnerProduct;
-    type OperationConfig = ForwardInnerProductConfig<'a>;
-}
-
 pub struct Primitive {
     pub handle: dnnl_primitive_t,
     pub desc: PrimitiveDescriptor,
@@ -234,8 +122,7 @@ impl Primitive {
     /// ```
     /// use onednnl::primitive::{Forward, PropForwardInference};
     /// use onednnl::engine::Engine;
-    /// use onednnl::primitive::ForwardBinary;
-    /// use onednnl::primitive::config::binary::ForwardBinaryConfig;
+    /// use onednnl::primitive::config::binary::{ForwardBinaryConfig, ForwardBinary};
     /// use onednnl::primitive::Primitive;
     /// use onednnl_sys::dnnl_alg_kind_t;
     /// use onednnl::memory::format_tag::x;

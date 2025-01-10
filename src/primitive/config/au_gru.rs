@@ -6,7 +6,7 @@ use {
         memory::descriptor::MemoryDescriptor,
         primitive::{
             attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Backward, Forward,
-            PropType,
+            Operation, OperationType, PropType,
         },
     },
     onednnl_sys::{
@@ -120,4 +120,22 @@ impl<'a, P: PropType<Backward>> PrimitiveConfig<'a, Backward, P> for BackwardAuG
             Err(status.into())
         }
     }
+}
+
+pub struct ForwardAuGru<P: PropType<Forward>> {
+    pub prop_type: P,
+}
+
+impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardAuGru<P> {
+    const TYPE: OperationType = OperationType::Augru;
+    type OperationConfig = ForwardAuGruConfig<'a>;
+}
+
+pub struct BackwardAuGru<P: PropType<Backward>> {
+    pub prop_type: P,
+}
+
+impl<'a, P: PropType<Backward>> Operation<'a, Backward, P> for BackwardAuGru<P> {
+    const TYPE: OperationType = OperationType::Augru;
+    type OperationConfig = BackwardAuGruConfig<'a>;
 }
