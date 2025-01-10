@@ -4,10 +4,11 @@ use {
         memory::descriptor::MemoryDescriptor,
         primitive::{
             attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Backward, Forward,
-            PropBackwardWeights, PropType,
+            PropBackwardData, PropBackwardWeights, PropType,
         },
     },
     onednnl_sys::{
+        dnnl_inner_product_backward_data_primitive_desc_create,
         dnnl_inner_product_backward_weights_primitive_desc_create,
         dnnl_inner_product_forward_primitive_desc_create, dnnl_status_t,
     },
@@ -72,6 +73,41 @@ impl<'a> PrimitiveConfig<'a, Backward, PropBackwardWeights>
                 self.src_desc.handle,
                 self.diff_weights_desc.handle,
                 self.diff_bias_desc.handle,
+                self.diff_dst_desc.handle,
+                self.hint_fwd_pd.handle,
+                self.attr.handle,
+            )
+        };
+
+        if status == dnnl_status_t::dnnl_success {
+            Ok(PrimitiveDescriptor { handle })
+        } else {
+            Err(status.into())
+        }
+    }
+}
+
+pub struct BackwardDataInnerProductConfig<'a> {
+    pub diff_src_desc: &'a MemoryDescriptor,
+    pub weights_desc: &'a MemoryDescriptor,
+    pub diff_dst_desc: &'a MemoryDescriptor,
+    pub hint_fwd_pd: &'a PrimitiveDescriptor,
+    pub attr: &'a PrimitiveAttributes,
+}
+
+impl<'a> PrimitiveConfig<'a, Backward, PropBackwardData> for BackwardDataInnerProductConfig<'a> {
+    fn create_primitive_desc(
+        &self,
+        engine: std::sync::Arc<crate::engine::Engine>,
+    ) -> Result<PrimitiveDescriptor, crate::error::DnnlError> {
+        let mut handle = std::ptr::null_mut();
+
+        let status = unsafe {
+            dnnl_inner_product_backward_data_primitive_desc_create(
+                &mut handle,
+                engine.handle,
+                self.diff_src_desc.handle,
+                self.weights_desc.handle,
                 self.diff_dst_desc.handle,
                 self.hint_fwd_pd.handle,
                 self.attr.handle,

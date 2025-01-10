@@ -14,7 +14,7 @@
 | `gemm`            |    ❌    |    ⬜    |  ❌  |  ❌   | 
 | `group_norm`      |    ❌    |    ❌    |  ❌  |  ❌   |
 | `gru`             |    ❌    |    ❌    |  ❌  |  ❌   |
-| `inner_product`   |    ✅    |    ❌    |  ❌  |  ❌   |
+| `inner_product`   |    ✅    |    ✅    |  ✅  |  ❌   |
 | `layer_norm`      |    ❌    |    ❌    |  ❌  |  ❌   |
 | `lbr_augru`       |    ❌    |    ❌    |  ❌  |  ❌   | 
 | `lbr_gru`         |    ❌    |    ❌    |  ❌  |  ❌   | 

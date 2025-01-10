@@ -5,7 +5,10 @@ use {
         batch_norm::ForwardBatchNormConfig,
         binary::ForwardBinaryConfig,
         eltwise::{BackwardEltwiseConfig, ForwardEltwiseConfig},
-        inner_product::BackwardWeightsInnerProductConfig,
+        inner_product::{
+            BackwardDataInnerProductConfig, BackwardWeightsInnerProductConfig,
+            ForwardInnerProductConfig,
+        },
         matmul::ForwardMatMulConfig,
         reduction::ForwardReductionConfig,
         PrimitiveConfig,
@@ -82,6 +85,9 @@ pub struct PropBackwardBias;
 pub struct PropBackwardWeights;
 
 #[derive(Debug, Clone, Copy)]
+pub struct PropBackwardData;
+
+#[derive(Debug, Clone, Copy)]
 pub struct PropAny;
 
 pub trait Operation<'a, D: Direction, P: PropType<D>> {
@@ -95,7 +101,7 @@ pub trait PropType<D> {
 }
 
 impl PropType<Forward> for PropForwardInference {
-    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_forward;
+    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_forward_inference;
 }
 
 impl PropType<Forward> for PropForwardTraining {
@@ -108,6 +114,10 @@ impl PropType<Backward> for PropBackward {
 
 impl PropType<Backward> for PropBackwardWeights {
     const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_backward_weights;
+}
+
+impl PropType<Backward> for PropBackwardData {
+    const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_backward_data;
 }
 
 pub struct ForwardAuGru<P: PropType<Forward>> {
@@ -192,6 +202,22 @@ pub struct BackwardWeightsInnerProduct;
 impl<'a> Operation<'a, Backward, PropBackwardWeights> for BackwardWeightsInnerProduct {
     const TYPE: OperationType = OperationType::InnerProduct;
     type OperationConfig = BackwardWeightsInnerProductConfig<'a>;
+}
+
+pub struct BackwardDataInnerProduct;
+
+impl<'a> Operation<'a, Backward, PropBackwardData> for BackwardDataInnerProduct {
+    const TYPE: OperationType = OperationType::InnerProduct;
+    type OperationConfig = BackwardDataInnerProductConfig<'a>;
+}
+
+pub struct ForwardInnerProduct<P: PropType<Forward>> {
+    pub prop_type: P,
+}
+
+impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardInnerProduct<P> {
+    const TYPE: OperationType = OperationType::InnerProduct;
+    type OperationConfig = ForwardInnerProductConfig<'a>;
 }
 
 pub struct Primitive {
