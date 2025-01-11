@@ -2,6 +2,7 @@ pub mod engine;
 pub mod error;
 pub mod memory;
 pub mod primitive;
+pub mod primitives;
 pub mod stream;
 
 use error::DnnlError;

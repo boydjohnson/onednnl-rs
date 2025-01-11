@@ -1,12 +1,11 @@
 use {
-    super::PrimitiveConfig,
     crate::{
         engine::Engine,
         error::DnnlError,
         memory::descriptor::MemoryDescriptor,
         primitive::{
-            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Backward, Forward,
-            Operation, OperationType, PropType,
+            attributes::PrimitiveAttributes, config::PrimitiveConfig,
+            descriptor::PrimitiveDescriptor, Backward, Forward, Operation, OperationType, PropType,
         },
     },
     onednnl_sys::{

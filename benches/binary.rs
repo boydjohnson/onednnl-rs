@@ -12,11 +12,8 @@ use {
             format_tag::x,
             Memory,
         },
-        primitive::{
-            attributes::PrimitiveAttributes,
-            config::binary::{Binary, ForwardBinary, ForwardBinaryConfig},
-            ExecArg, Primitive, PropForwardInference,
-        },
+        primitive::{attributes::PrimitiveAttributes, ExecArg, Primitive, PropForwardInference},
+        primitives::binary::{Binary, ForwardBinary, ForwardBinaryConfig},
         set_primitive_cache_capacity,
         stream::Stream,
     },

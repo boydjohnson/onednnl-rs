@@ -1,10 +1,9 @@
 use {
-    super::PrimitiveConfig,
     crate::{
         memory::descriptor::MemoryDescriptor,
         primitive::{
-            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Backward, Forward,
-            Operation, OperationType, PropType,
+            attributes::PrimitiveAttributes, config::PrimitiveConfig,
+            descriptor::PrimitiveDescriptor, Backward, Forward, Operation, OperationType, PropType,
         },
     },
     onednnl_sys::{

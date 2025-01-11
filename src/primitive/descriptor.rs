@@ -20,11 +20,10 @@ impl PrimitiveDescriptor {
     ///         engine::Engine,
     ///         memory::{descriptor::MemoryDescriptor, format_tag::x},
     ///         primitive::{
-    ///             attributes::PrimitiveAttributes,
-    ///             config::binary::{ForwardBinary, ForwardBinaryConfig},
-    ///             descriptor::PrimitiveDescriptor,
-    ///             Forward, PropForwardInference,
+    ///             attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward,
+    ///             PropForwardInference,
     ///         },
+    ///         primitives::binary::{ForwardBinary, ForwardBinaryConfig},
     ///     },
     ///     onednnl_sys::{dnnl_alg_kind_t, dnnl_data_type_t::dnnl_f32},
     /// };

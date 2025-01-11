@@ -1,12 +1,9 @@
-use {
-    super::PrimitiveConfig,
-    crate::{
-        memory::descriptor::MemoryDescriptor,
-        onednnl_sys::{dnnl_prelu_forward_primitive_desc_create, dnnl_status_t},
-        primitive::{
-            attributes::PrimitiveAttributes, descriptor::PrimitiveDescriptor, Forward, Operation,
-            OperationType, PropType,
-        },
+use crate::{
+    memory::descriptor::MemoryDescriptor,
+    onednnl_sys::{dnnl_prelu_forward_primitive_desc_create, dnnl_status_t},
+    primitive::{
+        attributes::PrimitiveAttributes, config::PrimitiveConfig, descriptor::PrimitiveDescriptor,
+        Forward, Operation, OperationType, PropType,
     },
 };
 
