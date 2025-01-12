@@ -108,13 +108,13 @@ impl PropType<Backward> for PropBackwardData {
     const KIND: dnnl_prop_kind_t::Type = dnnl_prop_kind_t::dnnl_backward_data;
 }
 
-pub struct Primitive {
+pub struct Primitive<'a, D: Direction, P: PropType<D>, C: PrimitiveConfig<'a, D, P>> {
     pub handle: dnnl_primitive_t,
-    pub desc: PrimitiveDescriptor,
+    pub desc: PrimitiveDescriptor<'a, D, P, C>,
     pub engine: Arc<Engine>,
 }
 
-impl Primitive {
+impl<'a, D: Direction, P: PropType<D>, C: PrimitiveConfig<'a, D, P>> Primitive<'a, D, P, C> {
     /// Creates a new `Primitive`.
     ///
     /// # Example
@@ -141,35 +141,36 @@ impl Primitive {
     /// // Define a forward binary config
     /// let binary_config = ForwardBinaryConfig {
     ///     alg_kind: dnnl_alg_kind_t::dnnl_binary_add, // Example: addition operation
-    ///     src0_desc: &src0_desc,
-    ///     src1_desc: &src1_desc,
-    ///     dst_desc: &dst_desc,
-    ///     attr: &PrimitiveAttributes::new().unwrap(),
+    ///     src0_desc: src0_desc,
+    ///     src1_desc: src1_desc,
+    ///     dst_desc: dst_desc,
+    ///     attr: PrimitiveAttributes::new().unwrap(),
     /// };
     ///
-    /// let primitive =
-    ///     Primitive::new::<_, PropForwardInference, ForwardBinary<_>>(binary_config, engine);
+    /// let primitive = Primitive::<_, PropForwardInference, ForwardBinaryConfig>::new::<
+    ///     ForwardBinary<_>,
+    /// >(binary_config, engine);
     ///
     /// assert!(primitive.is_ok());
     /// ```
-    pub fn new<'a, D: Direction, P: PropType<D>, O: Operation<'a, D, P>>(
+    pub fn new<O: Operation<'a, D, P, OperationConfig = C>>(
         config: O::OperationConfig,
         engine: Arc<Engine>,
-    ) -> Result<Primitive, DnnlError> {
+    ) -> Result<Primitive<'a, D, P, C>, DnnlError> {
         let desc = config.create_primitive_desc(engine.clone())?;
         Self::from_descriptor(desc, engine)
     }
 
     pub fn from_descriptor(
-        desc: PrimitiveDescriptor,
+        desc: PrimitiveDescriptor<'a, D, P, C>,
         engine: Arc<Engine>,
-    ) -> Result<Primitive, DnnlError> {
+    ) -> Result<Primitive<'a, D, P, C>, DnnlError> {
         let mut handle = std::ptr::null_mut();
 
         let status = unsafe { dnnl_primitive_create(&mut handle, desc.handle) };
 
         if status == dnnl_status_t::dnnl_success {
-            Ok(Self {
+            Ok(Primitive::<'a, D, P, C> {
                 handle,
                 desc,
                 engine,
@@ -205,7 +206,9 @@ impl Primitive {
     }
 }
 
-impl Drop for Primitive {
+impl<'a, D: Direction, P: PropType<D>, C: PrimitiveConfig<'a, D, P>> Drop
+    for Primitive<'a, D, P, C>
+{
     fn drop(&mut self) {
         unsafe {
             dnnl_primitive_destroy(self.handle);

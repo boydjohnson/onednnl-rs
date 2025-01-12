@@ -4,7 +4,7 @@ use {
         primitive::{
             attributes::PrimitiveAttributes, config::PrimitiveConfig,
             descriptor::PrimitiveDescriptor, Backward, Forward, Operation, OperationType,
-            PropBackwardData, PropBackwardWeights, PropType,
+            PropBackwardData, PropBackwardWeights, PropForwardTraining, PropType,
         },
     },
     onednnl_sys::{
@@ -12,21 +12,30 @@ use {
         dnnl_inner_product_backward_weights_primitive_desc_create,
         dnnl_inner_product_forward_primitive_desc_create, dnnl_status_t,
     },
+    std::marker::PhantomData,
 };
 
-pub struct ForwardInnerProductConfig<'a> {
-    pub src_desc: &'a MemoryDescriptor,
-    pub weights_desc: &'a MemoryDescriptor,
-    pub bias_desc: &'a MemoryDescriptor,
-    pub dst_desc: &'a MemoryDescriptor,
-    pub attr: &'a PrimitiveAttributes,
+pub struct ForwardInnerProductConfig {
+    pub src_desc: MemoryDescriptor,
+    pub weights_desc: MemoryDescriptor,
+    pub bias_desc: MemoryDescriptor,
+    pub dst_desc: MemoryDescriptor,
+    pub attr: PrimitiveAttributes,
 }
 
-impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardInnerProductConfig<'a> {
+impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardInnerProductConfig {
     fn create_primitive_desc(
-        &self,
+        self,
         engine: std::sync::Arc<crate::engine::Engine>,
-    ) -> Result<crate::primitive::descriptor::PrimitiveDescriptor, crate::error::DnnlError> {
+    ) -> Result<
+        crate::primitive::descriptor::PrimitiveDescriptor<
+            'a,
+            Forward,
+            P,
+            ForwardInnerProductConfig,
+        >,
+        crate::error::DnnlError,
+    > {
         let mut handle = std::ptr::null_mut();
         let status = unsafe {
             dnnl_inner_product_forward_primitive_desc_create(
@@ -41,7 +50,16 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardInnerP
             )
         };
         if status == dnnl_status_t::dnnl_success {
-            Ok(PrimitiveDescriptor { handle })
+            Ok(
+                PrimitiveDescriptor::<'_, Forward, P, ForwardInnerProductConfig> {
+                    handle,
+                    config: self,
+
+                    _marker_a: PhantomData,
+                    _marker_d: PhantomData,
+                    _marker_p: PhantomData,
+                },
+            )
         } else {
             Err(status.into())
         }
@@ -49,21 +67,30 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardInnerP
 }
 
 pub struct BackwardWeightsInnerProductConfig<'a> {
-    pub src_desc: &'a MemoryDescriptor,
-    pub diff_weights_desc: &'a MemoryDescriptor,
-    pub diff_bias_desc: &'a MemoryDescriptor,
-    pub diff_dst_desc: &'a MemoryDescriptor,
-    pub hint_fwd_pd: &'a PrimitiveDescriptor,
-    pub attr: &'a PrimitiveAttributes,
+    pub src_desc: MemoryDescriptor,
+    pub diff_weights_desc: MemoryDescriptor,
+    pub diff_bias_desc: MemoryDescriptor,
+    pub diff_dst_desc: MemoryDescriptor,
+    pub hint_fwd_pd:
+        &'a PrimitiveDescriptor<'a, Forward, PropForwardTraining, ForwardInnerProductConfig>,
+    pub attr: PrimitiveAttributes,
 }
 
 impl<'a> PrimitiveConfig<'a, Backward, PropBackwardWeights>
     for BackwardWeightsInnerProductConfig<'a>
 {
     fn create_primitive_desc(
-        &self,
+        self,
         engine: std::sync::Arc<crate::engine::Engine>,
-    ) -> Result<PrimitiveDescriptor, crate::error::DnnlError> {
+    ) -> Result<
+        PrimitiveDescriptor<
+            'a,
+            Backward,
+            PropBackwardWeights,
+            BackwardWeightsInnerProductConfig<'a>,
+        >,
+        crate::error::DnnlError,
+    > {
         let mut handle = std::ptr::null_mut();
 
         let status = unsafe {
@@ -80,7 +107,14 @@ impl<'a> PrimitiveConfig<'a, Backward, PropBackwardWeights>
         };
 
         if status == dnnl_status_t::dnnl_success {
-            Ok(PrimitiveDescriptor { handle })
+            Ok(PrimitiveDescriptor {
+                handle,
+                config: self,
+
+                _marker_a: PhantomData,
+                _marker_d: PhantomData,
+                _marker_p: PhantomData,
+            })
         } else {
             Err(status.into())
         }
@@ -88,18 +122,22 @@ impl<'a> PrimitiveConfig<'a, Backward, PropBackwardWeights>
 }
 
 pub struct BackwardDataInnerProductConfig<'a> {
-    pub diff_src_desc: &'a MemoryDescriptor,
-    pub weights_desc: &'a MemoryDescriptor,
-    pub diff_dst_desc: &'a MemoryDescriptor,
-    pub hint_fwd_pd: &'a PrimitiveDescriptor,
-    pub attr: &'a PrimitiveAttributes,
+    pub diff_src_desc: MemoryDescriptor,
+    pub weights_desc: MemoryDescriptor,
+    pub diff_dst_desc: MemoryDescriptor,
+    pub hint_fwd_pd:
+        &'a PrimitiveDescriptor<'a, Forward, PropForwardTraining, ForwardInnerProductConfig>,
+    pub attr: PrimitiveAttributes,
 }
 
 impl<'a> PrimitiveConfig<'a, Backward, PropBackwardData> for BackwardDataInnerProductConfig<'a> {
     fn create_primitive_desc(
-        &self,
+        self,
         engine: std::sync::Arc<crate::engine::Engine>,
-    ) -> Result<PrimitiveDescriptor, crate::error::DnnlError> {
+    ) -> Result<
+        PrimitiveDescriptor<'a, Backward, PropBackwardData, BackwardDataInnerProductConfig<'a>>,
+        crate::error::DnnlError,
+    > {
         let mut handle = std::ptr::null_mut();
 
         let status = unsafe {
@@ -115,7 +153,14 @@ impl<'a> PrimitiveConfig<'a, Backward, PropBackwardData> for BackwardDataInnerPr
         };
 
         if status == dnnl_status_t::dnnl_success {
-            Ok(PrimitiveDescriptor { handle })
+            Ok(PrimitiveDescriptor {
+                handle,
+                config: self,
+
+                _marker_a: PhantomData,
+                _marker_d: PhantomData,
+                _marker_p: PhantomData,
+            })
         } else {
             Err(status.into())
         }
@@ -140,7 +185,7 @@ pub struct ForwardInnerProduct<P: PropType<Forward>> {
     pub prop_type: P,
 }
 
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardInnerProduct<P> {
+impl<P: PropType<Forward>> Operation<'_, Forward, P> for ForwardInnerProduct<P> {
     const TYPE: OperationType = OperationType::InnerProduct;
-    type OperationConfig = ForwardInnerProductConfig<'a>;
+    type OperationConfig = ForwardInnerProductConfig;
 }

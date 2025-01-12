@@ -7,22 +7,25 @@ use {
         },
     },
     onednnl_sys::{dnnl_batch_normalization_forward_primitive_desc_create, dnnl_status_t},
-    std::ffi::c_uint,
+    std::{ffi::c_uint, marker::PhantomData},
 };
 
-pub struct ForwardBatchNormConfig<'a> {
-    src_desc: &'a MemoryDescriptor,
-    dst_desc: &'a MemoryDescriptor,
+pub struct ForwardBatchNormConfig {
+    src_desc: MemoryDescriptor,
+    dst_desc: MemoryDescriptor,
     epsilon: f32,
     flags: c_uint,
-    attr: &'a PrimitiveAttributes,
+    attr: PrimitiveAttributes,
 }
 
-impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardBatchNormConfig<'a> {
+impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardBatchNormConfig {
     fn create_primitive_desc(
-        &self,
+        self,
         engine: std::sync::Arc<crate::engine::Engine>,
-    ) -> Result<crate::primitive::descriptor::PrimitiveDescriptor, crate::error::DnnlError> {
+    ) -> Result<
+        crate::primitive::descriptor::PrimitiveDescriptor<'a, Forward, P, ForwardBatchNormConfig>,
+        crate::error::DnnlError,
+    > {
         let mut handle = std::ptr::null_mut();
 
         let status = unsafe {
@@ -39,7 +42,15 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardBatchN
         };
 
         if status == dnnl_status_t::dnnl_success {
-            Ok(PrimitiveDescriptor { handle })
+            Ok(
+                PrimitiveDescriptor::<'a, Forward, P, ForwardBatchNormConfig> {
+                    handle,
+                    config: self,
+                    _marker_a: PhantomData,
+                    _marker_d: PhantomData,
+                    _marker_p: PhantomData,
+                },
+            )
         } else {
             Err(status.into())
         }
@@ -50,8 +61,8 @@ pub struct ForwardBatchNorm<P: PropType<Forward>> {
     pub prop_type: P,
 }
 
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardBatchNorm<P> {
+impl<P: PropType<Forward>> Operation<'_, Forward, P> for ForwardBatchNorm<P> {
     const TYPE: OperationType = OperationType::BatchNormalization;
 
-    type OperationConfig = ForwardBatchNormConfig<'a>;
+    type OperationConfig = ForwardBatchNormConfig;
 }

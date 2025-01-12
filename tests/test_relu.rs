@@ -8,7 +8,8 @@ use onednnl::{
     },
     onednnl_sys::{DNNL_ARG_DIFF_DST, DNNL_ARG_DIFF_SRC, DNNL_ARG_DST, DNNL_ARG_SRC},
     primitive::{
-        attributes::PrimitiveAttributes, ExecArg, Primitive, PropBackward, PropForwardTraining,
+        attributes::PrimitiveAttributes, Backward, ExecArg, Primitive, PropBackward,
+        PropForwardTraining,
     },
     primitives::eltwise::{
         BackwardEltwise, BackwardEltwiseConfig, ForwardEltwise, ForwardEltwiseConfig, Unary,
@@ -34,17 +35,18 @@ fn test_relu_forward_backward() {
 
     let forward_config = ForwardEltwiseConfig {
         alg_kind: Unary::RELU, // ReLU forward
-        src_desc: &src_md,
-        dst_desc: &dst_md,
+        src_desc: src_md.clone_desc().unwrap(),
+        dst_desc: dst_md.clone_desc().unwrap(),
         alpha: 0.0,
         beta: 0.0,
-        attr: &PrimitiveAttributes::new().unwrap(), // no special attributes
+        attr: PrimitiveAttributes::new().unwrap(), // no special attributes
     };
 
     // 3b. Create the forward primitive
-    let fwd_prim =
-        Primitive::new::<_, PropForwardTraining, ForwardEltwise<_>>(forward_config, engine.clone())
-            .unwrap();
+    let fwd_prim = Primitive::<_, PropForwardTraining, ForwardEltwiseConfig>::new::<
+        ForwardEltwise<_>,
+    >(forward_config, engine.clone())
+    .unwrap();
 
     // 3c. Allocate memory for the forward result
 
@@ -108,24 +110,22 @@ fn test_relu_forward_backward() {
     let diff_src_md = src_mem.desc.clone_desc().unwrap();
 
     //    We also need a "forward hint descriptor", from the forward pass
-    let forward_hint_desc = fwd_prim.desc.handle; // The C-level primitive_desc handle
 
     let bwd_config = BackwardEltwiseConfig {
         alg_kind: Unary::RELU_USE_DST_FOR_BWD,
-        diff_src_desc: &diff_src_md,
-        diff_dest_desc: &diff_dst_md,
-        data_desc: &dst_mem.desc, // "data_desc" is typically the forward data or forward dst
+        diff_src_desc: diff_src_md.clone_desc().unwrap(),
+        diff_dest_desc: diff_dst_md.clone_desc().unwrap(),
+        data_desc: dst_mem.desc.clone_desc().unwrap(), // "data_desc" is typically the forward data or forward dst
         alpha: 0.0,
         beta: 0.0,
-        forward_hint_desc,
-        attr: &PrimitiveAttributes::new().unwrap(),
+        forward_hint_desc: &fwd_prim.desc,
+        attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // 5b. Create the backward primitive
-    let bwd_prim = Primitive::new::<_, PropBackward, BackwardEltwise<PropBackward>>(
-        bwd_config,
-        engine.clone(),
-    )
+    let bwd_prim = Primitive::<Backward, PropBackward, BackwardEltwiseConfig>::new::<
+        BackwardEltwise<_>,
+    >(bwd_config, engine.clone())
     .unwrap();
 
     let diff_dst_mem =
