@@ -47,7 +47,7 @@ pub fn test_smoke_binary_add() {
         engine.clone(),
     );
     assert!(primitive.is_ok());
-    let primitive = primitive.unwrap();
+    let mut primitive = primitive.unwrap();
 
     let s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap().into();
 
@@ -83,7 +83,7 @@ pub fn test_smoke_binary_add() {
 
     assert!(stream.wait().is_ok());
 
-    assert_eq!(result, Ok(()));
+    assert!(result.is_ok());
 
     assert_eq!(dst_memory.to_vec(), Ok(vec![5.0, 7.0, 9.0]));
 }
@@ -137,7 +137,7 @@ pub fn test_smoke_matmul() {
 
     // Step 5: Create and Configure the MatMul Primitive
     // Instantiate the matmul primitive using the configuration
-    let primitive = Primitive::<_, PropForwardInference, _>::new::<ForwardMatMul<_>>(
+    let mut primitive = Primitive::<_, PropForwardInference, _>::new::<ForwardMatMul<_>>(
         matmul_config,
         engine.clone(),
     )
@@ -248,7 +248,7 @@ pub fn test_reduction_smoke() {
         ForwardReduction,
     >(reduction_config, engine.clone());
     assert!(primitive.is_ok());
-    let primitive = primitive.unwrap();
+    let mut primitive = primitive.unwrap();
 
     let src_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0]).unwrap().into();
 
@@ -278,7 +278,7 @@ pub fn test_reduction_smoke() {
 
     assert!(stream.wait().is_ok());
 
-    assert_eq!(result, Ok(()));
+    assert!(result.is_ok());
 
     assert_eq!(dst_memory.to_vec(), Ok(vec![6.0]));
 }

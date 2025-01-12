@@ -46,7 +46,7 @@ fn binary_add(b: &mut Bencher) {
         ForwardBinary<_>,
     >(binary_config, engine.clone());
     assert!(primitive.is_ok());
-    let primitive = primitive.unwrap();
+    let mut primitive = primitive.unwrap();
 
     let s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap().into();
 
@@ -88,7 +88,7 @@ fn binary_add(b: &mut Bencher) {
 
         assert!(stream.wait().is_ok());
 
-        assert_eq!(result, Ok(()));
+        assert!(result.is_ok());
 
         assert_eq!(dst_memory.to_vec(), Ok(vec![5.0, 7.0, 9.0]));
     });

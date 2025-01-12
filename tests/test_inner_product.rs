@@ -100,14 +100,14 @@ fn test_inner_product_nchw_to_nc_backprop() {
     };
 
     // 3a. Create the forward primitive
-    let fwd_prim = Primitive::<_, PropForwardTraining, _>::new::<ForwardInnerProduct<_>>(
+    let mut fwd_prim = Primitive::<_, PropForwardTraining, _>::new::<ForwardInnerProduct<_>>(
         fwd_config,
         engine.clone(),
     )
     .unwrap();
 
     // 3b. Execute forward
-    fwd_prim
+    let fwd_desc = fwd_prim
         .execute(
             &stream,
             vec![
@@ -129,6 +129,7 @@ fn test_inner_product_nchw_to_nc_backprop() {
                 },
             ],
         )
+        .unwrap()
         .unwrap();
     stream.wait().unwrap();
 
@@ -172,12 +173,12 @@ fn test_inner_product_nchw_to_nc_backprop() {
         diff_weights_desc: weights_md.clone_desc().unwrap(),
         diff_bias_desc: bias_md.clone_desc().unwrap(),
         diff_dst_desc: dst_md.clone_desc().unwrap(),
-        hint_fwd_pd: &fwd_prim.desc, // from the forward primitive
+        hint_fwd_pd: &fwd_desc, // from the forward primitive
         attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // 4a. Create backward-weights primitive
-    let bwd_weights_prim = Primitive::<Backward, PropBackwardWeights, _>::new::<
+    let mut bwd_weights_prim = Primitive::<Backward, PropBackwardWeights, _>::new::<
         BackwardWeightsInnerProduct,
     >(bwd_weights_config, engine.clone())
     .unwrap();
@@ -236,17 +237,15 @@ fn test_inner_product_nchw_to_nc_backprop() {
         diff_src_desc: src_md.clone_desc().unwrap(),
         weights_desc: weights_md.clone_desc().unwrap(),
         diff_dst_desc: dst_md.clone_desc().unwrap(),
-        hint_fwd_pd: &fwd_prim.desc, // from forward pass
+        hint_fwd_pd: &fwd_desc, // from forward pass
         attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // 5a. Create backward-data primitive
-    let bwd_data_prim =
-        Primitive::<Backward, PropBackwardData, _>::new::<BackwardDataInnerProduct>(
-            bwd_data_config,
-            engine.clone(),
-        )
-        .unwrap();
+    let mut bwd_data_prim = Primitive::<Backward, PropBackwardData, _>::new::<
+        BackwardDataInnerProduct,
+    >(bwd_data_config, engine.clone())
+    .unwrap();
 
     // 5b. Execute backward-data
     bwd_data_prim

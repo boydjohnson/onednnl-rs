@@ -110,7 +110,7 @@ impl PropType<Backward> for PropBackwardData {
 
 pub struct Primitive<'a, D: Direction, P: PropType<D>, C: PrimitiveConfig<'a, D, P>> {
     pub handle: dnnl_primitive_t,
-    pub desc: PrimitiveDescriptor<'a, D, P, C>,
+    pub desc: Option<PrimitiveDescriptor<'a, D, P, C>>,
     pub engine: Arc<Engine>,
 }
 
@@ -172,7 +172,7 @@ impl<'a, D: Direction, P: PropType<D>, C: PrimitiveConfig<'a, D, P>> Primitive<'
         if status == dnnl_status_t::dnnl_success {
             Ok(Primitive::<'a, D, P, C> {
                 handle,
-                desc,
+                desc: Some(desc),
                 engine,
             })
         } else {
@@ -180,7 +180,11 @@ impl<'a, D: Direction, P: PropType<D>, C: PrimitiveConfig<'a, D, P>> Primitive<'
         }
     }
 
-    pub fn execute<T>(&self, stream: &Stream, args: Vec<ExecArg<'_, T>>) -> Result<(), DnnlError> {
+    pub fn execute<T>(
+        &mut self,
+        stream: &Stream,
+        args: Vec<ExecArg<'_, T>>,
+    ) -> Result<Option<PrimitiveDescriptor<'a, D, P, C>>, DnnlError> {
         let c_args: Vec<dnnl_exec_arg_t> = args
             .iter()
             .map(|arg| dnnl_exec_arg_t {
@@ -199,7 +203,7 @@ impl<'a, D: Direction, P: PropType<D>, C: PrimitiveConfig<'a, D, P>> Primitive<'
         };
 
         if status == dnnl_status_t::dnnl_success {
-            Ok(())
+            Ok(self.desc.take())
         } else {
             Err(status.into())
         }

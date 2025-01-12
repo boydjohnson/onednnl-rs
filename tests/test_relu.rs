@@ -43,7 +43,7 @@ fn test_relu_forward_backward() {
     };
 
     // 3b. Create the forward primitive
-    let fwd_prim = Primitive::<_, PropForwardTraining, ForwardEltwiseConfig>::new::<
+    let mut fwd_prim = Primitive::<_, PropForwardTraining, ForwardEltwiseConfig>::new::<
         ForwardEltwise<_>,
     >(forward_config, engine.clone())
     .unwrap();
@@ -62,7 +62,7 @@ fn test_relu_forward_backward() {
     let stream = Stream::new(engine.clone()).unwrap();
 
     // 3d. Execute forward ReLU
-    fwd_prim
+    let fwd_desc = fwd_prim
         .execute(
             &stream,
             vec![
@@ -76,6 +76,7 @@ fn test_relu_forward_backward() {
                 },
             ],
         )
+        .unwrap()
         .unwrap();
 
     stream.wait().unwrap();
@@ -118,12 +119,12 @@ fn test_relu_forward_backward() {
         data_desc: dst_mem.desc.clone_desc().unwrap(), // "data_desc" is typically the forward data or forward dst
         alpha: 0.0,
         beta: 0.0,
-        forward_hint_desc: &fwd_prim.desc,
+        forward_hint_desc: &fwd_desc,
         attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // 5b. Create the backward primitive
-    let bwd_prim = Primitive::<Backward, PropBackward, BackwardEltwiseConfig>::new::<
+    let mut bwd_prim = Primitive::<Backward, PropBackward, BackwardEltwiseConfig>::new::<
         BackwardEltwise<_>,
     >(bwd_config, engine.clone())
     .unwrap();
