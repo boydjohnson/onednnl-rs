@@ -3,29 +3,34 @@ use {
         memory::descriptor::MemoryDescriptor,
         primitive::{
             attributes::PrimitiveAttributes, config::PrimitiveConfig,
-            descriptor::PrimitiveDescriptor, Backward, Forward, Operation, OperationType, PropType,
+            descriptor::PrimitiveDescriptor, Backward, Forward, Operation, OperationType,
+            PropBackward, PropForwardTraining, PropType,
         },
     },
     onednnl_sys::{
         dnnl_alg_kind_t, dnnl_eltwise_backward_primitive_desc_create,
-        dnnl_eltwise_forward_primitive_desc_create, dnnl_primitive_desc_t, dnnl_status_t,
+        dnnl_eltwise_forward_primitive_desc_create, dnnl_status_t,
     },
+    std::marker::PhantomData,
 };
 
-pub struct ForwardEltwiseConfig<'a> {
+pub struct ForwardEltwiseConfig {
     pub alg_kind: dnnl_alg_kind_t::Type,
-    pub src_desc: &'a MemoryDescriptor,
-    pub dst_desc: &'a MemoryDescriptor,
+    pub src_desc: MemoryDescriptor,
+    pub dst_desc: MemoryDescriptor,
     pub alpha: f32,
     pub beta: f32,
-    pub attr: &'a PrimitiveAttributes,
+    pub attr: PrimitiveAttributes,
 }
 
-impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardEltwiseConfig<'a> {
+impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardEltwiseConfig {
     fn create_primitive_desc(
-        &self,
+        self,
         engine: std::sync::Arc<crate::engine::Engine>,
-    ) -> Result<crate::primitive::descriptor::PrimitiveDescriptor, crate::error::DnnlError> {
+    ) -> Result<
+        crate::primitive::descriptor::PrimitiveDescriptor<'a, Forward, P, ForwardEltwiseConfig>,
+        crate::error::DnnlError,
+    > {
         let mut handle = std::ptr::null_mut();
         let status = unsafe {
             dnnl_eltwise_forward_primitive_desc_create(
@@ -42,7 +47,16 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardEltwis
         };
 
         if status == dnnl_status_t::dnnl_success {
-            Ok(PrimitiveDescriptor { handle })
+            Ok(
+                PrimitiveDescriptor::<'a, Forward, P, ForwardEltwiseConfig> {
+                    handle,
+                    config: self,
+
+                    _marker_a: PhantomData,
+                    _marker_d: PhantomData,
+                    _marker_p: PhantomData,
+                },
+            )
         } else {
             Err(status.into())
         }
@@ -91,20 +105,29 @@ impl Unary {
 
 pub struct BackwardEltwiseConfig<'a> {
     pub alg_kind: dnnl_alg_kind_t::Type,
-    pub diff_src_desc: &'a MemoryDescriptor,
-    pub diff_dest_desc: &'a MemoryDescriptor,
-    pub data_desc: &'a MemoryDescriptor,
+    pub diff_src_desc: MemoryDescriptor,
+    pub diff_dest_desc: MemoryDescriptor,
+    pub data_desc: MemoryDescriptor,
     pub alpha: f32,
     pub beta: f32,
-    pub forward_hint_desc: dnnl_primitive_desc_t,
-    pub attr: &'a PrimitiveAttributes,
+    pub forward_hint_desc:
+        &'a PrimitiveDescriptor<'a, Forward, PropForwardTraining, ForwardEltwiseConfig>,
+    pub attr: PrimitiveAttributes,
 }
 
-impl<'a, P: PropType<Backward>> PrimitiveConfig<'a, Backward, P> for BackwardEltwiseConfig<'a> {
+impl<'a> PrimitiveConfig<'a, Backward, PropBackward> for BackwardEltwiseConfig<'a> {
     fn create_primitive_desc(
-        &self,
+        self,
         engine: std::sync::Arc<crate::engine::Engine>,
-    ) -> Result<crate::primitive::descriptor::PrimitiveDescriptor, crate::error::DnnlError> {
+    ) -> Result<
+        crate::primitive::descriptor::PrimitiveDescriptor<
+            'a,
+            Backward,
+            PropBackward,
+            BackwardEltwiseConfig<'a>,
+        >,
+        crate::error::DnnlError,
+    > {
         let mut handle = std::ptr::null_mut();
         let status = unsafe {
             dnnl_eltwise_backward_primitive_desc_create(
@@ -116,13 +139,22 @@ impl<'a, P: PropType<Backward>> PrimitiveConfig<'a, Backward, P> for BackwardElt
                 self.data_desc.handle,
                 self.alpha,
                 self.beta,
-                self.forward_hint_desc,
+                self.forward_hint_desc.handle,
                 self.attr.handle,
             )
         };
 
         if status == dnnl_status_t::dnnl_success {
-            Ok(PrimitiveDescriptor { handle })
+            Ok(
+                PrimitiveDescriptor::<'a, Backward, PropBackward, BackwardEltwiseConfig<'a>> {
+                    handle,
+                    config: self,
+
+                    _marker_a: PhantomData,
+                    _marker_d: PhantomData,
+                    _marker_p: PhantomData,
+                },
+            )
         } else {
             Err(status.into())
         }
@@ -133,17 +165,17 @@ pub struct ForwardEltwise<P: PropType<Forward>> {
     pub prop_type: P,
 }
 
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardEltwise<P> {
+impl<P: PropType<Forward>> Operation<'_, Forward, P> for ForwardEltwise<P> {
     const TYPE: OperationType = OperationType::Eltwise;
 
-    type OperationConfig = ForwardEltwiseConfig<'a>;
+    type OperationConfig = ForwardEltwiseConfig;
 }
 
 pub struct BackwardEltwise<T: PropType<Backward>> {
     pub prop_type: T,
 }
 
-impl<'a, P: PropType<Backward>> Operation<'a, Backward, P> for BackwardEltwise<P> {
+impl<'a> Operation<'a, Backward, PropBackward> for BackwardEltwise<PropBackward> {
     const TYPE: OperationType = OperationType::Eltwise;
     type OperationConfig = BackwardEltwiseConfig<'a>;
 }

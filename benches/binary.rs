@@ -36,16 +36,17 @@ fn binary_add(b: &mut Bencher) {
 
     let binary_config = ForwardBinaryConfig {
         alg_kind: Binary::ADD,
-        src0_desc: &src0_desc,
-        src1_desc: &src1_desc,
-        dst_desc: &dst_desc,
-        attr: &PrimitiveAttributes::new().unwrap(),
+        src0_desc: src0_desc.clone_desc().unwrap(),
+        src1_desc: src1_desc.clone_desc().unwrap(),
+        dst_desc: dst_desc.clone_desc().unwrap(),
+        attr: PrimitiveAttributes::new().unwrap(),
     };
 
-    let primitive =
-        Primitive::new::<_, PropForwardInference, ForwardBinary<_>>(binary_config, engine.clone());
+    let primitive = Primitive::<_, PropForwardInference, ForwardBinaryConfig>::new::<
+        ForwardBinary<_>,
+    >(binary_config, engine.clone());
     assert!(primitive.is_ok());
-    let primitive = primitive.unwrap();
+    let mut primitive = primitive.unwrap();
 
     let s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap().into();
 
@@ -87,7 +88,7 @@ fn binary_add(b: &mut Bencher) {
 
         assert!(stream.wait().is_ok());
 
-        assert_eq!(result, Ok(()));
+        assert!(result.is_ok());
 
         assert_eq!(dst_memory.to_vec(), Ok(vec![5.0, 7.0, 9.0]));
     });

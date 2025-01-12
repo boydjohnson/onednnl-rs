@@ -8,21 +8,30 @@ use {
         },
     },
     onednnl_sys::{dnnl_alg_kind_t, dnnl_binary_primitive_desc_create, dnnl_status_t},
+    std::marker::PhantomData,
 };
 
-pub struct ForwardBinaryConfig<'a> {
+pub struct ForwardBinaryConfig {
     pub alg_kind: dnnl_alg_kind_t::Type,
-    pub src0_desc: &'a MemoryDescriptor,
-    pub src1_desc: &'a MemoryDescriptor,
-    pub dst_desc: &'a MemoryDescriptor,
-    pub attr: &'a PrimitiveAttributes,
+    pub src0_desc: MemoryDescriptor,
+    pub src1_desc: MemoryDescriptor,
+    pub dst_desc: MemoryDescriptor,
+    pub attr: PrimitiveAttributes,
 }
 
-impl<'a> PrimitiveConfig<'a, Forward, PropForwardInference> for ForwardBinaryConfig<'a> {
+impl<'a> PrimitiveConfig<'a, Forward, PropForwardInference> for ForwardBinaryConfig {
     fn create_primitive_desc(
-        &self,
+        self,
         engine: std::sync::Arc<crate::engine::Engine>,
-    ) -> Result<crate::primitive::descriptor::PrimitiveDescriptor, crate::error::DnnlError> {
+    ) -> Result<
+        crate::primitive::descriptor::PrimitiveDescriptor<
+            'a,
+            Forward,
+            PropForwardInference,
+            ForwardBinaryConfig,
+        >,
+        crate::error::DnnlError,
+    > {
         let mut handle = std::ptr::null_mut();
         let status = unsafe {
             dnnl_binary_primitive_desc_create(
@@ -37,7 +46,14 @@ impl<'a> PrimitiveConfig<'a, Forward, PropForwardInference> for ForwardBinaryCon
         };
 
         if status == dnnl_status_t::dnnl_success {
-            Ok(PrimitiveDescriptor { handle })
+            Ok(PrimitiveDescriptor {
+                handle,
+                config: self,
+
+                _marker_a: PhantomData,
+                _marker_d: PhantomData,
+                _marker_p: PhantomData,
+            })
         } else {
             Err(status.into())
         }
@@ -65,8 +81,8 @@ pub struct ForwardBinary<P: PropType<Forward>> {
     pub prop_type: P,
 }
 
-impl<'a> Operation<'a, Forward, PropForwardInference> for ForwardBinary<PropForwardInference> {
+impl Operation<'_, Forward, PropForwardInference> for ForwardBinary<PropForwardInference> {
     const TYPE: OperationType = OperationType::Binary;
 
-    type OperationConfig = ForwardBinaryConfig<'a>;
+    type OperationConfig = ForwardBinaryConfig;
 }

@@ -1,24 +1,30 @@
-use crate::{
-    memory::descriptor::MemoryDescriptor,
-    onednnl_sys::{dnnl_prelu_forward_primitive_desc_create, dnnl_status_t},
-    primitive::{
-        attributes::PrimitiveAttributes, config::PrimitiveConfig, descriptor::PrimitiveDescriptor,
-        Forward, Operation, OperationType, PropType,
+use {
+    crate::{
+        memory::descriptor::MemoryDescriptor,
+        onednnl_sys::{dnnl_prelu_forward_primitive_desc_create, dnnl_status_t},
+        primitive::{
+            attributes::PrimitiveAttributes, config::PrimitiveConfig,
+            descriptor::PrimitiveDescriptor, Forward, Operation, OperationType, PropType,
+        },
     },
+    std::marker::PhantomData,
 };
 
-pub struct ForwardPreluConfig<'a> {
-    pub src_desc: &'a MemoryDescriptor,
-    weights_desc: &'a MemoryDescriptor,
-    dst_desc: &'a MemoryDescriptor,
-    attr: &'a PrimitiveAttributes,
+pub struct ForwardPreluConfig {
+    pub src_desc: MemoryDescriptor,
+    pub weights_desc: MemoryDescriptor,
+    pub dst_desc: MemoryDescriptor,
+    pub attr: PrimitiveAttributes,
 }
 
-impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardPreluConfig<'a> {
+impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardPreluConfig {
     fn create_primitive_desc(
-        &self,
+        self,
         engine: std::sync::Arc<crate::engine::Engine>,
-    ) -> Result<crate::primitive::descriptor::PrimitiveDescriptor, crate::error::DnnlError> {
+    ) -> Result<
+        crate::primitive::descriptor::PrimitiveDescriptor<'a, Forward, P, ForwardPreluConfig>,
+        crate::error::DnnlError,
+    > {
         let mut handle = std::ptr::null_mut();
 
         let status = unsafe {
@@ -33,7 +39,14 @@ impl<'a, P: PropType<Forward>> PrimitiveConfig<'a, Forward, P> for ForwardPreluC
             )
         };
         if status == dnnl_status_t::dnnl_success {
-            Ok(PrimitiveDescriptor { handle })
+            Ok(PrimitiveDescriptor::<'_, Forward, P, ForwardPreluConfig> {
+                handle,
+                config: self,
+
+                _marker_a: PhantomData,
+                _marker_d: PhantomData,
+                _marker_p: PhantomData,
+            })
         } else {
             Err(status.into())
         }
@@ -44,7 +57,7 @@ pub struct ForwardPrelu<P: PropType<Forward>> {
     pub prop_type: P,
 }
 
-impl<'a, P: PropType<Forward>> Operation<'a, Forward, P> for ForwardPrelu<P> {
+impl<P: PropType<Forward>> Operation<'_, Forward, P> for ForwardPrelu<P> {
     const TYPE: crate::primitive::OperationType = OperationType::PRelu;
-    type OperationConfig = ForwardPreluConfig<'a>;
+    type OperationConfig = ForwardPreluConfig;
 }

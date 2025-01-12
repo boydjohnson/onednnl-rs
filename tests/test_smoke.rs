@@ -4,15 +4,12 @@ use {
         memory::{
             buffer::AlignedBuffer,
             data_type_size,
-            descriptor::{
-                DataType, DataTypeQuery, DimsQuery, MemoryDescriptor,
-                NDimsQuery,
-            },
+            descriptor::{DataType, DataTypeQuery, DimsQuery, MemoryDescriptor, NDimsQuery},
             format_tag::{abc, abcd, x},
             Memory,
         },
         primitive::{
-            attributes::PrimitiveAttributes, ExecArg, Primitive, PropForwardInference,
+            attributes::PrimitiveAttributes, ExecArg, Forward, Primitive, PropForwardInference,
         },
         primitives::{
             binary::{Binary, ForwardBinary, ForwardBinaryConfig},
@@ -22,8 +19,8 @@ use {
         stream::Stream,
     },
     onednnl_sys::{
-        dnnl_data_type_t::dnnl_f32, DNNL_ARG_BIAS,
-        DNNL_ARG_DST, DNNL_ARG_SRC, DNNL_ARG_SRC_0, DNNL_ARG_SRC_1, DNNL_ARG_WEIGHTS,
+        dnnl_data_type_t::dnnl_f32, DNNL_ARG_BIAS, DNNL_ARG_DST, DNNL_ARG_SRC, DNNL_ARG_SRC_0,
+        DNNL_ARG_SRC_1, DNNL_ARG_WEIGHTS,
     },
     std::sync::Arc,
 };
@@ -38,17 +35,19 @@ pub fn test_smoke_binary_add() {
 
     let binary_config = ForwardBinaryConfig {
         alg_kind: Binary::ADD,
-        src0_desc: &src0_desc,
-        src1_desc: &src1_desc,
-        dst_desc: &dst_desc,
-        attr: &PrimitiveAttributes::new().unwrap(),
+        src0_desc: src0_desc.clone_desc().unwrap(),
+        src1_desc: src1_desc.clone_desc().unwrap(),
+        dst_desc: dst_desc.clone_desc().unwrap(),
+        attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // Create the primitive
-    let primitive =
-        Primitive::new::<_, PropForwardInference, ForwardBinary<_>>(binary_config, engine.clone());
+    let primitive = Primitive::<_, PropForwardInference, _>::new::<ForwardBinary<_>>(
+        binary_config,
+        engine.clone(),
+    );
     assert!(primitive.is_ok());
-    let primitive = primitive.unwrap();
+    let mut primitive = primitive.unwrap();
 
     let s0_buffer = AlignedBuffer::new(&[4.0f32, 5.0, 6.0]).unwrap().into();
 
@@ -84,7 +83,7 @@ pub fn test_smoke_binary_add() {
 
     assert!(stream.wait().is_ok());
 
-    assert_eq!(result, Ok(()));
+    assert!(result.is_ok());
 
     assert_eq!(dst_memory.to_vec(), Ok(vec![5.0, 7.0, 9.0]));
 }
@@ -129,18 +128,20 @@ pub fn test_smoke_matmul() {
     // Step 4: Configure the MatMul Operation
     // Set up ForwardMatMulConfig with references to the memory descriptors
     let matmul_config = ForwardMatMulConfig {
-        src_desc: &src_desc,
-        weights_desc: &weights_desc,
-        bias_desc: &zero_bias_desc, // Disables bias
-        dst_desc: &dst_desc,
-        attr: &PrimitiveAttributes::new().unwrap(),
+        src_desc: src_desc.clone_desc().unwrap(),
+        weights_desc: weights_desc.clone_desc().unwrap(),
+        bias_desc: zero_bias_desc.clone_desc().unwrap(), // Disables bias
+        dst_desc: dst_desc.clone_desc().unwrap(),
+        attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // Step 5: Create and Configure the MatMul Primitive
     // Instantiate the matmul primitive using the configuration
-    let primitive =
-        Primitive::new::<_, PropForwardInference, ForwardMatMul<_>>(matmul_config, engine.clone())
-            .expect("Failed to create MatMul primitive");
+    let mut primitive = Primitive::<_, PropForwardInference, _>::new::<ForwardMatMul<_>>(
+        matmul_config,
+        engine.clone(),
+    )
+    .expect("Failed to create MatMul primitive");
 
     // Step 6: Create Memory Objects
     // Wrap the buffers into oneDNN Memory objects
@@ -235,20 +236,19 @@ pub fn test_reduction_smoke() {
 
     let reduction_config = ForwardReductionConfig {
         alg_kind: Reduction::SUM,
-        src_desc: &src_desc,
-        dst_desc: &dst_desc,
+        src_desc: src_desc.clone_desc().unwrap(),
+        dst_desc: dst_desc.clone_desc().unwrap(),
         p: 0.0,
         eps: 0.0,
-        attr: &PrimitiveAttributes::new().unwrap(),
+        attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // Create the primitive
-    let primitive = Primitive::new::<_, PropForwardInference, ForwardReduction>(
-        reduction_config,
-        engine.clone(),
-    );
+    let primitive = Primitive::<Forward, PropForwardInference, ForwardReductionConfig>::new::<
+        ForwardReduction,
+    >(reduction_config, engine.clone());
     assert!(primitive.is_ok());
-    let primitive = primitive.unwrap();
+    let mut primitive = primitive.unwrap();
 
     let src_buffer = AlignedBuffer::new(&[1.0f32, 2.0, 3.0]).unwrap().into();
 
@@ -278,7 +278,7 @@ pub fn test_reduction_smoke() {
 
     assert!(stream.wait().is_ok());
 
-    assert_eq!(result, Ok(()));
+    assert!(result.is_ok());
 
     assert_eq!(dst_memory.to_vec(), Ok(vec![6.0]));
 }

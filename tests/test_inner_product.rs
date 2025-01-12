@@ -1,3 +1,5 @@
+use onednnl::primitive::Backward;
+
 #[test]
 fn test_inner_product_nchw_to_nc_backprop() {
     use onednnl::{
@@ -90,22 +92,22 @@ fn test_inner_product_nchw_to_nc_backprop() {
     // ---------------------------------------------------
     // 3. Forward Inner Product
     let fwd_config = ForwardInnerProductConfig {
-        src_desc: &src_md,
-        weights_desc: &weights_md,
-        bias_desc: &bias_md,
-        dst_desc: &dst_md,
-        attr: &PrimitiveAttributes::new().unwrap(),
+        src_desc: src_md.clone_desc().unwrap(),
+        weights_desc: weights_md.clone_desc().unwrap(),
+        bias_desc: bias_md.clone_desc().unwrap(),
+        dst_desc: dst_md.clone_desc().unwrap(),
+        attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // 3a. Create the forward primitive
-    let fwd_prim = Primitive::new::<_, PropForwardTraining, ForwardInnerProduct<_>>(
+    let mut fwd_prim = Primitive::<_, PropForwardTraining, _>::new::<ForwardInnerProduct<_>>(
         fwd_config,
         engine.clone(),
     )
     .unwrap();
 
     // 3b. Execute forward
-    fwd_prim
+    let fwd_desc = fwd_prim
         .execute(
             &stream,
             vec![
@@ -127,6 +129,7 @@ fn test_inner_product_nchw_to_nc_backprop() {
                 },
             ],
         )
+        .unwrap()
         .unwrap();
     stream.wait().unwrap();
 
@@ -166,19 +169,18 @@ fn test_inner_product_nchw_to_nc_backprop() {
             .unwrap();
 
     let bwd_weights_config = BackwardWeightsInnerProductConfig {
-        src_desc: &src_md,
-        diff_weights_desc: &weights_md,
-        diff_bias_desc: &bias_md,
-        diff_dst_desc: &dst_md,
-        hint_fwd_pd: &fwd_prim.desc, // from the forward primitive
-        attr: &PrimitiveAttributes::new().unwrap(),
+        src_desc: src_md.clone_desc().unwrap(),
+        diff_weights_desc: weights_md.clone_desc().unwrap(),
+        diff_bias_desc: bias_md.clone_desc().unwrap(),
+        diff_dst_desc: dst_md.clone_desc().unwrap(),
+        hint_fwd_pd: &fwd_desc, // from the forward primitive
+        attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // 4a. Create backward-weights primitive
-    let bwd_weights_prim = Primitive::new::<_, PropBackwardWeights, BackwardWeightsInnerProduct>(
-        bwd_weights_config,
-        engine.clone(),
-    )
+    let mut bwd_weights_prim = Primitive::<Backward, PropBackwardWeights, _>::new::<
+        BackwardWeightsInnerProduct,
+    >(bwd_weights_config, engine.clone())
     .unwrap();
 
     // 4b. Execute backward-weights
@@ -232,18 +234,17 @@ fn test_inner_product_nchw_to_nc_backprop() {
             .unwrap();
 
     let bwd_data_config = BackwardDataInnerProductConfig {
-        diff_src_desc: &src_md,
-        weights_desc: &weights_md,
-        diff_dst_desc: &dst_md,
-        hint_fwd_pd: &fwd_prim.desc, // from forward pass
-        attr: &PrimitiveAttributes::new().unwrap(),
+        diff_src_desc: src_md.clone_desc().unwrap(),
+        weights_desc: weights_md.clone_desc().unwrap(),
+        diff_dst_desc: dst_md.clone_desc().unwrap(),
+        hint_fwd_pd: &fwd_desc, // from forward pass
+        attr: PrimitiveAttributes::new().unwrap(),
     };
 
     // 5a. Create backward-data primitive
-    let bwd_data_prim = Primitive::new::<_, PropBackwardData, BackwardDataInnerProduct>(
-        bwd_data_config,
-        engine.clone(),
-    )
+    let mut bwd_data_prim = Primitive::<Backward, PropBackwardData, _>::new::<
+        BackwardDataInnerProduct,
+    >(bwd_data_config, engine.clone())
     .unwrap();
 
     // 5b. Execute backward-data
