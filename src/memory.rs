@@ -19,10 +19,10 @@ pub fn data_type_size(ty: dnnl_data_type_t::Type) -> usize {
 }
 
 /// Memory without an underlying buffer
-const DNNL_MEMORY_NONE: *mut c_void = std::ptr::null_mut();
+pub const DNNL_MEMORY_NONE: *mut c_void = std::ptr::null_mut();
 
 /// Memory with library allocated buffer
-const DNNL_MEMORY_ALLOCATE: *mut c_void = (usize::MAX) as *mut c_void;
+pub const DNNL_MEMORY_ALLOCATE: *mut c_void = (usize::MAX) as *mut c_void;
 
 pub mod buffer;
 pub mod descriptor;
