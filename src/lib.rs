@@ -1,5 +1,6 @@
 pub mod engine;
 pub mod error;
+pub mod graph;
 pub mod memory;
 pub mod primitive;
 pub mod primitives;
