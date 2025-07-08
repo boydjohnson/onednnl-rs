@@ -44,9 +44,9 @@ jobs:
                   echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
                   sudo apt update
 
-            - name: Install Intel oneAPI DNNL version 2025.0.1
+            - name: Install Intel oneAPI OneDNN package 2025.2
               if: steps.cache-oneapi.outputs.cache-hit != 'true'
-              run: sudo apt install -y intel-oneapi-dnnl-devel=2025.0.1-*
+              run: sudo apt install -y intel-oneapi-dnnl-devel-2025.2
 
             - name: Build
               run: |
