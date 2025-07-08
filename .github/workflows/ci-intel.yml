@@ -1,64 +1,64 @@
 name: Build onednnl safe bindings for Intel
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+    push:
+        branches:
+            - main
+    pull_request:
+        branches:
+            - main
 
 jobs:
-  build:
-    runs-on: ubuntu-24.04
-    env:
-      RUSTFLAGS: -D warnings
-    strategy:
-      matrix:
-        rust:
-          - stable
-          - nightly
+    build:
+        runs-on: ubuntu-24.04
+        env:
+            RUSTFLAGS: -D warnings
+        strategy:
+            matrix:
+                rust:
+                    - stable
+                    - nightly
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
 
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@master
-        with:
-          toolchain: ${{ matrix.rust }}
+            - name: Install Rust toolchain
+              uses: dtolnay/rust-toolchain@master
+              with:
+                  toolchain: ${{ matrix.rust }}
 
-      - name: Cache oneAPI installation
-        id: cache-oneapi
-        uses: actions/cache@v3
-        with:
-          path: /opt/intel/oneapi
-          key: oneapi-${{ env.CACHE_NUMBER }}
-          restore-keys: |
-            oneapi-
+            - name: Cache oneAPI installation
+              id: cache-oneapi
+              uses: actions/cache@v3
+              with:
+                  path: /opt/intel/oneapi
+                  key: oneapi-${{ env.CACHE_NUMBER }}
+                  restore-keys: |
+                      oneapi-
 
-      - name: Set up Intel oneAPI APT repository
-        if: steps.cache-oneapi.outputs.cache-hit != 'true'
-        run: |
-          wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | sudo gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg
-          echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
-          sudo apt update
+            - name: Set up Intel oneAPI APT repository
+              if: steps.cache-oneapi.outputs.cache-hit != 'true'
+              run: |
+                  wget -qO- https://apt.repos.intel.com/intel-gpg-keys/GPG-PUB-KEY-INTEL-SW-PRODUCTS.PUB | sudo gpg --dearmor -o /usr/share/keyrings/oneapi-archive-keyring.gpg
+                  echo "deb [signed-by=/usr/share/keyrings/oneapi-archive-keyring.gpg] https://apt.repos.intel.com/oneapi all main" | sudo tee /etc/apt/sources.list.d/oneAPI.list
+                  sudo apt update
 
-      - name: Install Intel oneAPI DNNL version 2025.0.1
-        if: steps.cache-oneapi.outputs.cache-hit != 'true'
-        run: sudo apt install -y intel-oneapi-dnnl-devel=2025.0.1-*
+            - name: Install Intel oneAPI DNNL version 2025.0.1
+              if: steps.cache-oneapi.outputs.cache-hit != 'true'
+              run: sudo apt install -y intel-oneapi-dnnl-devel=2025.0.1-*
 
-      - name: Build
-        run: |
-          source /opt/intel/oneapi/setvars.sh
-          cargo build
+            - name: Build
+              run: |
+                  source /opt/intel/oneapi/setvars.sh
+                  cargo build
 
-      - name: Run tests
-        run: |
-          source /opt/intel/oneapi/setvars.sh
-          cargo test
-      
-      - name: Run docs
-        run: |
-          source /opt/intel/oneapi/setvars.sh
-          cargo doc
+            - name: Run tests
+              run: |
+                  source /opt/intel/oneapi/setvars.sh
+                  cargo test
+
+            - name: Run docs
+              run: |
+                  source /opt/intel/oneapi/setvars.sh
+                  cargo doc
