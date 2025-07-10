@@ -25,16 +25,23 @@ pub mod add;
 pub mod avg_pool;
 pub mod avg_pool_backward;
 pub mod batch_norm_inference;
+pub mod bias_add;
 pub mod clamp;
 pub mod concat;
 pub mod convolution;
+pub mod divide;
 pub mod elu;
 pub mod end;
 pub mod exp;
+pub mod gelu;
 pub mod matmul;
+pub mod max_pool;
+pub mod multiply;
 pub mod reorder;
+pub mod sigmoid;
 pub mod softmax;
 pub mod static_reshape;
+pub mod subtract;
 
 pub type OpAttrKind = onednnl_sys::dnnl_graph_op_attr_t::Type;
 
