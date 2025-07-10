@@ -1,11 +1,15 @@
 use onednnl_sys::{
     dnnl_graph_compiled_partition_create, dnnl_graph_compiled_partition_destroy,
-    dnnl_graph_compiled_partition_execute, dnnl_graph_compiled_partition_t, dnnl_status_t,
+    dnnl_graph_compiled_partition_execute, dnnl_graph_compiled_partition_query_logical_tensor,
+    dnnl_graph_compiled_partition_t, dnnl_status_t,
 };
 
 use crate::{
     error::DnnlError,
-    graph::{partition::OneDNNGraphPartition, tensor::tensor::Tensor},
+    graph::{
+        partition::OneDNNGraphPartition,
+        tensor::{logical::LogicalTensor, tensor::Tensor},
+    },
     stream::Stream,
 };
 
@@ -59,6 +63,28 @@ impl CompiledPartition {
         }
 
         Ok(())
+    }
+
+    pub fn query_logical_tensor(&self, index: usize) -> Result<LogicalTensor, DnnlError> {
+        let mut logical_tensor = std::mem::MaybeUninit::uninit();
+        let status = unsafe {
+            dnnl_graph_compiled_partition_query_logical_tensor(
+                self.handle,
+                index,
+                logical_tensor.as_mut_ptr(),
+            )
+        };
+
+        if status != dnnl_status_t::dnnl_success {
+            return Err(status.into());
+        }
+
+        let lt = unsafe {
+            LogicalTensor {
+                handle: logical_tensor.assume_init(),
+            }
+        };
+        Ok(lt)
     }
 }
 
