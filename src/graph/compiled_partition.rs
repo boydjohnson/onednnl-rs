@@ -1,16 +1,17 @@
-use onednnl_sys::{
-    dnnl_graph_compiled_partition_create, dnnl_graph_compiled_partition_destroy,
-    dnnl_graph_compiled_partition_execute, dnnl_graph_compiled_partition_query_logical_tensor,
-    dnnl_graph_compiled_partition_t, dnnl_status_t,
-};
-
-use crate::{
-    error::DnnlError,
-    graph::{
-        partition::OneDNNGraphPartition,
-        tensor::{logical::LogicalTensor, tensor::Tensor},
+use {
+    crate::{
+        error::DnnlError,
+        graph::{
+            partition::OneDNNGraphPartition,
+            tensor::{logical::LogicalTensor, tensor::Tensor},
+        },
+        stream::Stream,
     },
-    stream::Stream,
+    onednnl_sys::{
+        dnnl_graph_compiled_partition_create, dnnl_graph_compiled_partition_destroy,
+        dnnl_graph_compiled_partition_execute, dnnl_graph_compiled_partition_query_logical_tensor,
+        dnnl_graph_compiled_partition_t, dnnl_status_t,
+    },
 };
 
 pub struct CompiledPartition {
