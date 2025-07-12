@@ -9,3 +9,10 @@ description = "high-level bindings to oneDNN Deep Learning library"
 
 [dependencies]
 onednnl-sys = "0.0.1"
+
+[features]
+default = []
+bindings = ["onednnl-sys/bindings"]
+
+[package.metadata.docs.rs]
+features = ["bindings"]
