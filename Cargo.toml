@@ -3,7 +3,7 @@ name = "onednnl"
 version = "0.0.1"
 edition = "2021"
 readme = "README.md"
-license = "MIT or Apache 2.0"
+license = "MIT OR Apache-2.0"
 documentation = "https://docs.rs/onednnl"
 description = "high-level bindings to oneDNN Deep Learning library"
 
