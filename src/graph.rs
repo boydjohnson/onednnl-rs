@@ -1,3 +1,4 @@
+/// Bindings to the graph api of oneDNN
 pub mod compiled_partition;
 pub mod graph;
 pub mod op;

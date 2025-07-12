@@ -1,7 +1,18 @@
 [package]
 name = "onednnl"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2021"
+readme = "README.md"
+license = "MIT or Apache 2.0"
+documentation = "https://docs.rs/onednnl"
+description = "high-level bindings to oneDNN Deep Learning library"
 
 [dependencies]
-onednnl-sys = { git = "https://github.com/boydjohnson/onednnl-sys" }
+onednnl-sys = "0.0.1"
+
+[features]
+default = []
+bindings = ["onednnl-sys/bindings"]
+
+[package.metadata.docs.rs]
+features = ["bindings"]
